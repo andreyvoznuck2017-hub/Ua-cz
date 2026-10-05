@@ -1,0 +1,57 @@
+name: Mail actions 2.4.4 real runtime
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-next244/runtime.py', '.github/workflows/mail-next244-runtime.yml']
+permissions:
+  contents: read
+concurrency:
+  group: mail-actions244-runtime
+  cancel-in-progress: false
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [31,35]
+    env:
+      QA_API: ${{ matrix.api }}
+      QA_SHA256: 7c6441b64f81ad461eb763016bfab2d3b0cf0726b8db8705da96d1ad97907e10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download pinned candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v244-r1/Svoyi-Android-2.4.4.apk' -o signed-input/app.apk
+          echo "$QA_SHA256  signed-input/app.apk" | sha256sum --check
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v243-r5b/Svoyi-Android-2.4.3.apk' -o signed-input/baseline243.apk
+          echo '36071a614fece010136aba12917dfdfab95bbbe1ecd712a1d6b7a9c41cb95990  signed-input/baseline243.apk' | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 playwright
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: UI actions with independent peer-side verification
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 mail-next244/runtime.py
+      - name: Save screenshots logs and exact APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-actions244-api-${{ matrix.api }}-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
