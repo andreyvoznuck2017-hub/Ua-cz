@@ -1,0 +1,32 @@
+name: Build mail actions 2.4.4
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-next244/MailActions244.java', 'mail-next244/build.py', '.github/workflows/mail-next244-build.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build native changes on pinned baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v243-r5b/Svoyi-Android-2.4.3.apk' -o input243.apk
+          python3 mail-next244/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mail-actions-244-unsigned-${{ github.run_number }}
+          path: candidate244/
+          if-no-files-found: error
+          retention-days: 7
