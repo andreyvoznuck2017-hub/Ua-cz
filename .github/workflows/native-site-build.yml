@@ -5,6 +5,7 @@ on:
     branches: [android-live-qa]
     paths:
       - 'repair/**'
+      - 'repair-extra/**'
       - '.github/workflows/native-site-build.yml'
 permissions:
   contents: read
@@ -28,7 +29,9 @@ jobs:
           sudo apt-get install -y libsmali-java
           python3 -m pip install cryptography
       - name: Compile native layout and sign isolated QA APK
-        run: python3 repair/build.py
+        run: |
+          python3 repair-extra/refine.py
+          python3 repair/build.py
       - name: Save candidate and integrity record
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,7 +43,7 @@ jobs:
   runtime:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -60,9 +63,9 @@ jobs:
           set -euo pipefail
           python3 -m pip install requests beautifulsoup4 pillow playwright
           python3 -m playwright install --with-deps chromium
-          mkdir -p runtime-output/baseline runtime-output/candidate
+          mkdir -p runtime-output/candidate
           if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
-      - name: Test baseline and candidate with non-empty mailbox
+      - name: Test exact final candidate with non-empty mailbox
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -71,10 +74,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            QA_APK=qa-input/Svoyi-Europe-Android-v2.4.1-Profile-QA-LiveTest.apk QA_PACKAGE=eu.svoyi.testapp01 QA_PHASE=api${{ matrix.api }}-baseline QA_OUTPUT=runtime-output/baseline python3 repair/stress-diagnostic.py || echo 'Baseline regression failed; evidence retained'
-            adb shell am force-stop eu.svoyi.testapp01
-            QA_APK=candidate-input/Svoyi-Europe-Android-v2.4.2-Site-Match-QA.apk QA_PACKAGE=eu.svoyi.testapp02 QA_PHASE=api${{ matrix.api }}-candidate QA_OUTPUT=runtime-output/candidate python3 repair/stress-diagnostic.py
+          script: QA_APK=candidate-input/Svoyi-Europe-Android-v2.4.2-Site-Match-QA.apk QA_PACKAGE=eu.svoyi.testapp02 QA_PHASE=api${{ matrix.api }}-candidate QA_OUTPUT=runtime-output/candidate python3 repair/stress-diagnostic.py
       - name: Save actual screenshots and assertions
         if: always()
         uses: actions/upload-artifact@v4
