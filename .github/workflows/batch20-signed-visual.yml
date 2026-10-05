@@ -1,0 +1,50 @@
+name: Signed 2.4.8 visual verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['batch20/signed_visual.py','.github/workflows/batch20-signed-visual.yml']
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      QA_API: '36'
+      QA_AREA: signed_visual
+      QA_SHA256: e8ed6574badea8b249195cec7a13791480a50b262246ca6e60fb5f9a528dcf28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exact signed baseline and candidate
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o signed-input/baseline.apk
+          echo '95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb  signed-input/baseline.apk' | sha256sum --check
+          curl --fail --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v248/Svoyi-Android-2.4.8.apk' -o signed-input/app.apk
+          echo "$QA_SHA256  signed-input/app.apk" | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Capture exact signed before and after
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 -m batch20.signed_visual
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-248-before-after-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
