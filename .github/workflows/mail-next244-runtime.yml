@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches: [android-live-qa]
-    paths: ['mail-next244/runtime.py', '.github/workflows/mail-next244-runtime.yml']
+    paths: ['mail-next244/runtime.py', 'mail-next244/launch.py', '.github/workflows/mail-next244-runtime.yml']
 permissions:
   contents: read
 concurrency:
-  group: mail-actions244-runtime
+  group: mail-actions244-runtime-launcher-fixed
   cancel-in-progress: false
 jobs:
   runtime:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [31,35]
+        api: [35]
     env:
       QA_API: ${{ matrix.api }}
       QA_SHA256: 7c6441b64f81ad461eb763016bfab2d3b0cf0726b8db8705da96d1ad97907e10
@@ -46,7 +46,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: python3 mail-next244/runtime.py
+          script: python3 mail-next244/launch.py
       - name: Save screenshots logs and exact APK
         if: always()
         uses: actions/upload-artifact@v4
