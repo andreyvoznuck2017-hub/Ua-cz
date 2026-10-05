@@ -1,0 +1,68 @@
+name: Image cancellation hotfix 2.4.5 build
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['image-fix245/build.py', 'image-fix245/CancellationProbe.java', '.github/workflows/image-fix245-build.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Rebuild only image lifecycle methods on issued 2.4.4
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v244-r1/Svoyi-Android-2.4.4.apk' -o input244.apk
+          python3 image-fix245/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imagefix245-unsigned-${{ github.run_number }}
+          path: candidate245/
+          retention-days: 7
+          if-no-files-found: error
+  ownership:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: imagefix245-unsigned-${{ github.run_number }}
+          path: candidate245
+      - name: Prepare baseline and KVM
+        run: |
+          mkdir -p evidence
+          curl --fail --location --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v244-r1/Svoyi-Android-2.4.4.apk' -o baseline244.apk
+          echo '7c6441b64f81ad461eb763016bfab2d3b0cf0726b8db8705da96d1ad97907e10  baseline244.apk' | sha256sum --check
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Exact packaged image class old-vs-new on Android 16 ART
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb push candidate245/cancellation-probe.jar /data/local/tmp/probe.jar
+            adb push baseline244.apk /data/local/tmp/baseline.apk
+            adb push candidate245/Svoyi-2.4.5-unsigned.apk /data/local/tmp/candidate.apk
+            adb shell 'CLASSPATH=/data/local/tmp/probe.jar:/data/local/tmp/baseline.apk app_process /system/bin eu.svoyi.qa.CancellationProbe baseline' > evidence/baseline-android36.json
+            adb shell 'CLASSPATH=/data/local/tmp/probe.jar:/data/local/tmp/candidate.apk app_process /system/bin eu.svoyi.qa.CancellationProbe candidate' > evidence/candidate-android36.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: imagefix245-ownership-${{ github.run_number }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
