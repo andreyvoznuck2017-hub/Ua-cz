@@ -1,0 +1,66 @@
+name: Owner-signed 2.4.8 verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['.github/workflows/owner-signed248-review.yml']
+permissions:
+  contents: read
+jobs:
+  signed-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Fetch already signed owner APK and verify public signature only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output verified-file
+          curl --fail --location --proto '=https' --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-248-owner-signed-e8ed6574/Svoyi-Android-2.4.8.apk' -o signed-input/app.apk
+          echo 'e8ed6574badea8b249195cec7a13791480a50b262246ca6e60fb5f9a528dcf28  signed-input/app.apk' | sha256sum --check
+          curl --fail --location --proto '=https' --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o signed-input/baseline.apk
+          echo '95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb  signed-input/baseline.apk' | sha256sum --check
+          SIGNER=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner -type f | sort -V | tail -1)
+          test -n "$SIGNER"
+          "$SIGNER" verify --verbose --print-certs signed-input/app.apk > verified-file/signature.txt
+          grep -F 'ccfed84422a95584ec5f37110f4c8ff461ede3afc3ae11d9ff46edb8896db1b1' verified-file/signature.txt
+          cp signed-input/app.apk verified-file/Svoyi-Android-2.4.8-Owner-Signed.apk
+          sha256sum verified-file/Svoyi-Android-2.4.8-Owner-Signed.apk > verified-file/SHA256.txt
+          printf '%s\n' 'Owner signed manually. Signature and hash verified. Runtime acceptance is a separate step. No private key accessed.' > verified-file/READ-ME.txt
+      - name: Retain exact immutable signed file
+        uses: actions/upload-artifact@v4
+        with:
+          name: owner-signed248-file-${{ github.run_number }}
+          path: verified-file/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Prepare Android test dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Compare delivered 2.4.5 with owner signed 2.4.8 on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 -P batch20/owner_signed_review.py
+      - name: Preserve real screenshots and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owner-signed248-evidence-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: warn
