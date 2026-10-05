@@ -1,0 +1,39 @@
+name: Build integrated batch20
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['batch20/Batch20*.java','batch20/build.py','.github/workflows/batch20-build.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail-compose247-unsigned-1
+          run-id: 37345161152
+          github-token: ${{ github.token }}
+          path: baseline247
+      - name: Compile native UI changes with original feature byte guards
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          python3 -P batch20/build.py
+      - name: Preserve unsigned candidate and source manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch20-unsigned-${{ github.run_number }}
+          path: candidate248/
+          retention-days: 7
+          if-no-files-found: error
