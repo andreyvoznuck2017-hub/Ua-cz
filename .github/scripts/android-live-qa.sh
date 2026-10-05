@@ -169,6 +169,34 @@ if tap_desc 'Пошук'; then
   sleep 1
 fi
 
+# Walk the main drawer sections one by one and capture the actual rendered screen.
+section_no=12
+for label in 'Робота' 'Житло' 'Знайомства' 'Спільнота' 'Групи' 'Маркет' 'Бізнес' 'Події' 'Курси' 'Попутники' 'Розваги'; do
+  if tap_desc 'Відкрити меню'; then
+    sleep 1
+    if tap_text "$label"; then
+      sleep 5
+      slug="$(printf '%02d' "$section_no")"
+      capture "${slug}-section"
+      section_no=$((section_no+1))
+    else
+      adb shell input keyevent KEYCODE_BACK || true
+      sleep 1
+    fi
+  fi
+done
+
+# Notifications has a dynamic unread suffix in its accessibility label.
+if tap_desc 'Відкрити меню'; then
+  sleep 1
+  if tap_text 'Сповіщення'; then
+    sleep 5
+    capture 23-notifications
+  else
+    adb shell input keyevent KEYCODE_BACK || true
+  fi
+fi
+
 adb shell dumpsys activity activities > qa-output/dumpsys-activity.txt 2>&1 || true
 adb shell dumpsys window windows > qa-output/dumpsys-window.txt 2>&1 || true
 adb shell dumpsys package "$PACKAGE" > qa-output/dumpsys-package.txt 2>&1 || true
