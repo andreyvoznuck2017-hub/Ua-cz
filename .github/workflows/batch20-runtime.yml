@@ -1,0 +1,83 @@
+name: Batch20 actual Android acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['batch20/qa.py','batch20/*_runtime.py','.github/workflows/batch20-runtime.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        area: [mail,media]
+        api: [36]
+    env:
+      QA_API: ${{ matrix.api }}
+      QA_AREA: ${{ matrix.area }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail-compose247-unsigned-1
+          run-id: 37345161152
+          github-token: ${{ github.token }}
+          path: baseline247
+      - uses: actions/download-artifact@v4
+        with:
+          name: batch20-unsigned-1
+          run-id: 37354449484
+          github-token: ${{ github.token }}
+          path: candidate248
+      - name: Prepare disposable internally signed code-identical test variants
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          echo '8ae3acf1150b6422ec8309e7477c398d7461082e9bda35d00877ffdb08f5af42  baseline247/Svoyi-2.4.7-unsigned.apk' | sha256sum --check
+          echo 'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041  candidate248/Svoyi-2.4.8-unsigned.apk' | sha256sum --check
+          keytool -genkeypair -keystore "$RUNNER_TEMP/disposable-batch20.p12" -storetype PKCS12 -storepass changeit -keypass changeit -alias ci -keyalg RSA -keysize 2048 -validity 2 -dname 'CN=Temporary Batch20 CI Only'
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/disposable-batch20.p12" --ks-pass pass:changeit --out signed-input/baseline.apk baseline247/Svoyi-2.4.7-unsigned.apk
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/disposable-batch20.p12" --ks-pass pass:changeit --out signed-input/app.apk candidate248/Svoyi-2.4.8-unsigned.apk
+          python3 - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          for before,after in [('baseline247/Svoyi-2.4.7-unsigned.apk','signed-input/baseline.apk'),('candidate248/Svoyi-2.4.8-unsigned.apk','signed-input/app.apk')]:
+           with zipfile.ZipFile(before) as a,zipfile.ZipFile(after) as b:
+            for n in a.namelist():
+             if not n.startswith('META-INF/'):assert a.read(n)==b.read(n),n
+          h=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+          digest=h('signed-input/app.apk')
+          with open(os.environ['GITHUB_ENV'],'a') as e:e.write('QA_SHA256='+digest+'\n')
+          Path('runtime-output/ci-provenance.json').write_text(json.dumps({'candidateUnsignedSha256':h('candidate248/Svoyi-2.4.8-unsigned.apk'),'ciApkSha256':digest,'area':os.environ['QA_AREA'],'api':os.environ['QA_API'],'allNonSignatureEntriesEqual':True,'originalKeyAccessed':False,'originalSignatureCompatible':False,'notForUserInstallation':True},indent=2))
+          PY
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          command -v ffprobe
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Test actual Android controls with independent server receipts
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated -camera-front emulated
+          script: python3 -m batch20.${{ matrix.area }}_runtime
+      - name: Keep failures and real screenshots without distribution-key claims
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch20-${{ matrix.area }}-api${{ matrix.api }}-${{ github.run_number }}
+          path: |
+            runtime-output/
+            !runtime-output/*.apk
+          retention-days: 7
+          if-no-files-found: error
