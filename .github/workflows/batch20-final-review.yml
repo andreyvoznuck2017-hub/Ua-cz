@@ -1,0 +1,82 @@
+name: Batch20 verified-login review
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['.github/workflows/batch20-final-review.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        area: [home,profile,mail,media]
+    env:
+      QA_API: '36'
+      QA_AREA: ${{ matrix.area }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail-compose247-unsigned-1
+          run-id: 37345161152
+          github-token: ${{ github.token }}
+          path: baseline247
+      - uses: actions/download-artifact@v4
+        with:
+          name: batch20-unsigned-1
+          run-id: 37354449484
+          github-token: ${{ github.token }}
+          path: candidate248
+      - name: Prepare internal-only runtime files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          echo '8ae3acf1150b6422ec8309e7477c398d7461082e9bda35d00877ffdb08f5af42  baseline247/Svoyi-2.4.7-unsigned.apk' | sha256sum --check
+          echo 'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041  candidate248/Svoyi-2.4.8-unsigned.apk' | sha256sum --check
+          keytool -genkeypair -keystore "$RUNNER_TEMP/ci-only.p12" -storetype PKCS12 -storepass changeit -alias ci -keyalg RSA -keysize 2048 -validity 2 -dname 'CN=Disposable CI Only'
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/ci-only.p12" --ks-pass pass:changeit --out signed-input/baseline.apk baseline247/Svoyi-2.4.7-unsigned.apk
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/ci-only.p12" --ks-pass pass:changeit --out signed-input/app.apk candidate248/Svoyi-2.4.8-unsigned.apk
+          python3 - <<'PY'
+          import json,hashlib,os,zipfile
+          from pathlib import Path
+          for src,dst in [('baseline247/Svoyi-2.4.7-unsigned.apk','signed-input/baseline.apk'),('candidate248/Svoyi-2.4.8-unsigned.apk','signed-input/app.apk')]:
+           with zipfile.ZipFile(src) as a,zipfile.ZipFile(dst) as b:
+            for name in a.namelist():
+             if not name.startswith('META-INF/'):assert a.read(name)==b.read(name),name
+          h=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('QA_SHA256='+h('signed-input/app.apk')+'\n')
+          Path('runtime-output/provenance.json').write_text(json.dumps({'candidateUnsignedSha256':h('candidate248/Svoyi-2.4.8-unsigned.apk'),'ciApkSha256':h('signed-input/app.apk'),'baselineUnsignedSha256':h('baseline247/Svoyi-2.4.7-unsigned.apk'),'allNonSignatureBytesEqual':True,'temporaryTestSignature':True,'originalKeyUsed':False,'installableOverUserBuild':False},indent=2))
+          PY
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          if [ "$QA_AREA" = media ]; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Actual Android scenario
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated -camera-front emulated
+          script: python3 -m batch20.entry
+      - name: Store evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch20-review-${{ matrix.area }}-${{ github.run_number }}
+          path: runtime-output/
+          if-no-files-found: error
+          retention-days: 7
