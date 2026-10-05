@@ -1,0 +1,47 @@
+name: Final owner-signed 2.4.8 Android16
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['batch20/final_signed248.py','.github/workflows/final-signed248.yml']
+permissions:
+  contents: read
+jobs:
+  final:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exact signed APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --location --retry 3 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v248-final/Svoyi-Android-2.4.8.apk' -o signed-input/final248.apk
+          echo 'e8ed6574badea8b249195cec7a13791480a50b262246ca6e60fb5f9a528dcf28  signed-input/final248.apk' | sha256sum --check
+          curl --fail --location --retry 3 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o signed-input/base245.apk
+          echo '95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb  signed-input/base245.apk' | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 playwright
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Exact signed update and visual smoke on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated -camera-front emulated
+          script: python3 batch20/final_signed248.py
+      - name: Upload exact APK and visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Svoyi-2.4.8-final-owner-signed
+          path: runtime-output/
+          retention-days: 14
+          if-no-files-found: error
