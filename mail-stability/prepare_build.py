@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-p=Path('mail-stability/build_unsigned.py');s=p.read_text()
+p=Path('mail-stability/build_unsigned.py');s=p.read_text().replace("ROOT/'TestManifest.xml'","ROOT/'AndroidManifest.xml'")
 old="""for p in (ROOT/'helper').rglob('*.smali'):
  dest=ROOT/'smali'/p.relative_to(ROOT/'helper');assert not dest.exists();dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)"""
 new="""helper_files=list((ROOT/'helper').rglob('*.smali'));aliases={};reuse=set()
