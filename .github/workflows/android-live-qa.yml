@@ -16,7 +16,8 @@ on:
   push:
     branches: [ android-live-qa ]
     paths:
-      - '.github/workflows/android-live-qa.yml'\n      - '.github/scripts/**'
+      - '.github/workflows/android-live-qa.yml'
+      - '.github/scripts/**'
       - 'app/**'
       - 'build.gradle'
       - 'settings.gradle'
