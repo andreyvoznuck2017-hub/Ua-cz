@@ -1,0 +1,31 @@
+name: Build mail compose 2.4.6
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-compose246/MailCompose246.java', 'mail-compose246/build.py', '.github/workflows/mail-compose246-build.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Compile scoped native patch
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o input245.apk
+          python3 mail-compose246/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mail-compose246-unsigned-${{ github.run_number }}
+          path: candidate246/
+          if-no-files-found: error
+          retention-days: 7
