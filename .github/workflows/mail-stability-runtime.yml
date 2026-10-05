@@ -1,0 +1,68 @@
+name: Mail stability 2.4.3 real runtime
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-stability/final_runtime.py', '.github/workflows/mail-stability-runtime.yml']
+permissions:
+  contents: read
+concurrency:
+  group: mail-stability-final-runtime
+  cancel-in-progress: false
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [26, 31, 35, 36]
+    env:
+      QA_API: ${{ matrix.api }}
+      QA_SHA256: b10d31dacc78394171ba9a96465348602dd6a474cab2a4e8cf0c7b4facd372fa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download signed artifacts with pinned checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          python3 -m pip install requests beautifulsoup4 playwright
+          python3 - <<'PY'
+          import hashlib, pathlib, urllib.request
+          root='https://test.jkunis.eu/android-qa-20261005-v243-r4/'
+          files={
+           'Svoyi-Android-2.4.3.apk':'b10d31dacc78394171ba9a96465348602dd6a474cab2a4e8cf0c7b4facd372fa',
+           'qa-instrumentation.apk':'e5d8a52aeedc5424318134b7162209aba9b1f1ed52ff4c5cdf4a49565d60c66f',
+           'status-probe.jar':'6b7d1410742e614cb6efdbe94d5ff955d7d6c9ac96cffd6585850c5e92afe970',
+           'original-main.apk':'7de3e7d441a23de0de00119aaf5077eb4be045e6d6faf2a1a4c49b73e81f09ec'}
+          for name,digest in files.items():
+           data=urllib.request.urlopen(root+name,timeout=60).read();assert hashlib.sha256(data).hexdigest()==digest,name
+           pathlib.Path('signed-input',name).write_bytes(data)
+          data=urllib.request.urlopen('https://test.jkunis.eu/android-update-20261005-v242/Svoyi-Android-2.4.2-QA.apk',timeout=60).read()
+          assert hashlib.sha256(data).hexdigest()=='32f42f59e8feef706a8b8c1aff7ac8852a6e9949e315d3cf942199e49f0b07bd'
+          pathlib.Path('signed-input/baseline242.apk').write_bytes(data)
+          PY
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Exercise ART policies non-empty mail send update offline and recovery
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 mail-stability/final_runtime.py
+      - name: Save actual screenshots and all assertion results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-stability-api-${{ matrix.api }}-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
