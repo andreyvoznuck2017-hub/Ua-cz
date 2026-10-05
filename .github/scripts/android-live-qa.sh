@@ -13,8 +13,21 @@ echo "=== APK ===" >> qa-output/device.txt
 sha256sum "$APK_PATH" >> qa-output/device.txt 2>&1 || true
 
 PACKAGE="${QA_PACKAGE_NAME:-}"
+if [ -z "$PACKAGE" ] && command -v apkanalyzer >/dev/null 2>&1; then
+  PACKAGE="$(apkanalyzer manifest application-id "$APK_PATH" 2>/dev/null | tr -d '\r\n' || true)"
+fi
+if [ -z "$PACKAGE" ] && command -v aapt >/dev/null 2>&1; then
+  PACKAGE="$(aapt dump badging "$APK_PATH" 2>/dev/null | sed -n "s/package: name='\\([^']*\\)'.*/\\1/p" | head -n1)"
+fi
+if [ -z "$PACKAGE" ] && command -v aapt2 >/dev/null 2>&1; then
+  PACKAGE="$(aapt2 dump badging "$APK_PATH" 2>/dev/null | sed -n "s/package: name='\\([^']*\\)'.*/\\1/p" | head -n1)"
+fi
+if [ -z "$PACKAGE" ] && [ -f app/build.gradle ]; then
+  PACKAGE="$(sed -n "s/.*applicationId[[:space:]]*['\"]\\([^'\"]*\\)['\"].*/\\1/p" app/build.gradle | head -n1)"
+fi
 if [ -z "$PACKAGE" ]; then
-  PACKAGE="$(aapt dump badging "$APK_PATH" 2>/dev/null | sed -n "s/package: name='\([^']*\)'.*/\1/p" | head -n1)"
+  echo "Could not determine application package" >&2
+  exit 3
 fi
 
 echo "$PACKAGE" > qa-output/package.txt
