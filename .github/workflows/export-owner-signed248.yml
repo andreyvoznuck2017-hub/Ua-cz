@@ -1,0 +1,26 @@
+name: Export owner signed 2.4.8
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['.github/workflows/export-owner-signed248.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - name: Download exact owner-signed APK
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://test.jkunis.eu/android-qa-248-owner-signed-e8ed6574/Svoyi-Android-2.4.8.apk' -OutFile 'Svoyi-Android-2.4.8.apk'
+          $sha=(Get-FileHash 'Svoyi-Android-2.4.8.apk' -Algorithm SHA256).Hash.ToLower()
+          if($sha -ne 'e8ed6574badea8b249195cec7a13791480a50b262246ca6e60fb5f9a528dcf28'){ throw 'hash mismatch' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Svoyi-Android-2.4.8-owner-signed
+          path: Svoyi-Android-2.4.8.apk
+          retention-days: 7
+          if-no-files-found: error
