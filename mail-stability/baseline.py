@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Run the exact already-delivered APK on older supported Android releases.
-Uses disposable server accounts only. No changes to application bytes or server code.
+"""Run the exact delivered APK; missing mail targets fail the test.
+The logcat clear operation is maintenance, not an application acceptance test.
 """
 import json,os,time,traceback
 from pathlib import Path
 source=Path('qa-runtime/diagnose.py').read_text().split('\ntry:run()')[0]
-source=source.replace("PACKAGE='eu.svoyi.testapp01'","PACKAGE='eu.svoyi.testapp02'")
+source=source.replace("PACKAGE='eu.svoyi.testapp01'","PACKAGE=os.environ.get('QA_PACKAGE','eu.svoyi.testapp02')")
 source=source.replace("email='qa.repair.'+os.environ['GITHUB_RUN_ID']+'.'+tag+'@example.com'","email='qa.compat.'+os.environ['GITHUB_RUN_ID']+'.'+os.environ['QA_API']+'.'+tag+'@example.com'")
+source=source.replace("adb('logcat','-c');", "adb('logcat','-c',allow_fail=True);")
 ns={};exec(compile(source,'qa-runtime/diagnose.py','exec'),ns)
-ns['web_capture']=lambda a,b: None  # This run is Android compatibility, not a website visual audit.
+ns['web_capture']=lambda a,b: None
 track=[];original_account=ns['account']
 def account(tag):
     value=original_account(tag);track.append(value);return value
