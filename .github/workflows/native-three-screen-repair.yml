@@ -46,6 +46,7 @@ jobs:
           tooling/jadx/bin/jadx --no-res -j 2 -d tooling/decompiled "$APK" > runtime-output/jadx.log 2>&1 || true
           if [ -d tooling/decompiled/sources/eu/svoyi ]; then cp -r tooling/decompiled/sources/eu/svoyi runtime-output/decompiled-svoyi; fi
           cp -r qa-runtime runtime-output/harness-source
+          cp -r repair runtime-output/repair-source
           if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
       - name: Real Android test with existing conversation
         uses: reactivecircus/android-emulator-runner@v2
@@ -56,7 +57,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: python3 qa-runtime/diagnose.py
+          script: python3 repair/run-diagnostic.py
       - name: Upload real evidence even when regression fails
         if: always()
         uses: actions/upload-artifact@v4
