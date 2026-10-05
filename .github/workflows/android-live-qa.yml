@@ -1,4 +1,5 @@
 name: Android Live UI QA
+# trigger: first live emulator run
 
 on:
   workflow_dispatch:
