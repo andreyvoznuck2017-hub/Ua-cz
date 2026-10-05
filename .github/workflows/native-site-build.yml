@@ -6,6 +6,7 @@ on:
     paths:
       - 'repair/**'
       - 'repair-extra/**'
+      - 'qa-fixes/**'
       - '.github/workflows/native-site-build.yml'
 permissions:
   contents: read
@@ -31,6 +32,7 @@ jobs:
       - name: Compile native layout and sign isolated QA APK
         run: |
           python3 repair-extra/refine.py
+          python3 qa-fixes/projection.py
           python3 repair/build.py
       - name: Save candidate and integrity record
         if: always()
@@ -63,6 +65,7 @@ jobs:
           set -euo pipefail
           python3 -m pip install requests beautifulsoup4 pillow playwright
           python3 -m playwright install --with-deps chromium
+          python3 qa-fixes/projection.py
           mkdir -p runtime-output/candidate
           if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
       - name: Test exact final candidate with non-empty mailbox
