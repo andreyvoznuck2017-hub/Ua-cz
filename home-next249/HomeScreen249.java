@@ -31,13 +31,13 @@ public final class HomeScreen249 {
     private List<String> order = new ArrayList<>();
     private final SharedPreferences prefs;
     private final String language;
-    private boolean grid=true, attached=false;
+    private boolean grid=true, attached=false, searchSession=false;
     private ScrollView parentScroll;
     private ViewTreeObserver observer;
     private final ViewTreeObserver.OnScrollChangedListener scrollListener=this::rememberPosition;
     private EditText query;
     private TextView scope, emptyState;
-    private NativeSiteUi.Flow quick;
+    private NativeSiteUi.Flow quick, searchMatches;
     private Button resume;
     private long lastRefresh;
     private String resumeId="";
@@ -53,7 +53,7 @@ public final class HomeScreen249 {
         model=value==null?new JSONObject():value;
         JSONObject state=model.optJSONObject("state"),user=state==null?null:state.optJSONObject("user");
         long id=user==null?0:user.optLong("id");
-        language=HomeRules249.locale(state==null?"uk":state.optString("language","uk"));
+        language=readLanguage(state,model);
         prefs=id>0&&state.optBoolean("signedIn")?activity.getSharedPreferences(HomeRules249.preferenceKey(id),Context.MODE_PRIVATE):null;
         if(prefs!=null){
             hidden.addAll(readSet("hidden"));collapsed.addAll(readSet("collapsed"));pins.addAll(readSet("pins"));
@@ -65,16 +65,22 @@ public final class HomeScreen249 {
             add(root,text(t("Головна не завантажилася. Дані не замінено порожнім списком.","Domovská stránka se nenačetla. Data nebyla nahrazena prázdným seznamem.","Home did not load. Data has not been replaced with an empty list."),16,false),0,12);
             add(root,button(t("Спробувати ще раз","Zkusit znovu","Try again"),this::refresh),0,8);return;
         }
-        split(nodes);buildHeader();add(root,sections,12,8);
-        emptyState=text(t("Немає відповідних блоків. Очистіть пошук або змініть налаштування головної.","Žádné odpovídající bloky. Vymažte hledání nebo upravte nastavení.","No matching blocks. Clear the search or adjust home settings."),16,false);emptyState.setVisibility(View.GONE);add(root,emptyState,8,12);buildSections();renderVisibility();
+        split(nodes);buildHeader();
+        emptyState=text(t("Немає відповідних блоків. Очистіть пошук або змініть налаштування головної.","Žádné odpovídající bloky. Vymažte hledání nebo upravte nastavení.","No matching blocks. Clear the search or adjust home settings."),16,false);emptyState.setVisibility(View.GONE);add(root,emptyState,8,12);add(root,sections,12,8);buildSections();renderVisibility();
         add(root,button(t("↑ На початок","↑ Na začátek","↑ Back to top"),()->{hideIme();if(parentScroll!=null)parentScroll.smoothScrollTo(0,0);}),8,16);
         root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){
             public void onViewAttachedToWindow(View v){attached=true;root.post(()->{
                 if(!attached)return;ViewParent p=root.getParent();while(p instanceof View&&!(p instanceof ScrollView))p=p.getParent();
                 if(p instanceof ScrollView){parentScroll=(ScrollView)p;observer=parentScroll.getViewTreeObserver();if(observer.isAlive())observer.addOnScrollChangedListener(scrollListener);}
             });}
-            public void onViewDetachedFromWindow(View v){persistPosition();attached=false;if(observer!=null&&observer.isAlive())observer.removeOnScrollChangedListener(scrollListener);observer=null;parentScroll=null;}
+            public void onViewDetachedFromWindow(View v){storePosition();attached=false;if(observer!=null&&observer.isAlive())observer.removeOnScrollChangedListener(scrollListener);observer=null;parentScroll=null;}
         });
+    }
+    private static String readLanguage(JSONObject state,JSONObject model){
+        String lang=state==null?"":state.optString("language","");if(lang.isEmpty())lang=model.optString("language","");
+        if(lang.isEmpty())try{lang=android.net.Uri.parse(model.optString("route","")).getQueryParameter("lang");}catch(RuntimeException ignored){}
+        if(lang==null||lang.isEmpty())try{if(Api.cookies!=null)for(java.net.HttpCookie c:Api.cookies.getCookieStore().get(java.net.URI.create("https://test.jkunis.eu")))if(c.getName().equals("svoyi_lang")){lang=c.getValue();break;}}catch(RuntimeException ignored){}
+        return HomeRules249.locale(lang);
     }
     private Set<String> readSet(String key){try{Set<String>s=prefs.getStringSet(key,Collections.emptySet());return s==null?Collections.emptySet():new HashSet<>(s);}catch(ClassCastException e){return Collections.emptySet();}}
     private String t(String uk,String cs,String en){return language.equals("cs")?cs:language.equals("en")?en:uk;}
@@ -100,23 +106,50 @@ public final class HomeScreen249 {
     }
     private void split(JSONArray nodes){
         List<JSONObject> parts=new ArrayList<>();
+        LinearLayout greeting=new LinearLayout(activity);greeting.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout introCopy=column();JSONObject leadingImage=null;
         for(int k=0;k<nodes.length();k++){
             JSONObject n=nodes.optJSONObject(k);if(n==null)continue;
             if(k==0&&n.optString("type").equals("card")){
                 JSONArray cs=array(n,"children");boolean intro=true;
-                for(int i=0;i<cs.length();i++){JSONObject c=cs.optJSONObject(i);if(c==null)continue;String type=c.optString("type");
+                for(int i=0;i<cs.length();i++){
+                    JSONObject c=cs.optJSONObject(i);if(c==null)continue;String type=c.optString("type");
+                    if(intro&&type.equals("image")&&leadingImage==null){leadingImage=c;continue;}
                     if(intro&&type.equals("link")){shortcuts.add(c);continue;}
-                    if(intro&&(type.equals("heading")||type.equals("text"))){TextView v=text(c.optString("text"),type.equals("heading")?25:15,type.equals("heading"));if(type.equals("text"))v.setTextColor(theme.muted);add(root,v,0,8);continue;}
-                    intro=false;parts.add(c);
+                    if(intro&&(type.equals("heading")||type.equals("text"))){
+                        TextView v=text(c.optString("text"),type.equals("heading")?23:14,type.equals("heading"));
+                        if(type.equals("text"))v.setTextColor(theme.muted);add(introCopy,v,0,6);continue;
+                    }
+                    intro=false;appendSections(parts,c,0);
                 }
-            }else parts.add(n);
+            }else appendSections(parts,n,0);
         }
+        if(leadingImage!=null){
+            String url=leadingImage.optString("url","");
+            if(!url.isEmpty()){
+                FrameLayout avatar=new FrameLayout(activity);avatar.setBackground(shape(theme.surface,40));avatar.setClipToOutline(true);
+                View image=host.image(url);if(image!=null){if(image instanceof ImageView)((ImageView)image).setScaleType(ImageView.ScaleType.FIT_CENTER);avatar.addView(image,new FrameLayout.LayoutParams(-1,-1));}
+                LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(dp(64),dp(64));ap.setMarginEnd(dp(12));greeting.addView(avatar,ap);
+            }
+        }
+        if(introCopy.getChildCount()>0){greeting.addView(introCopy,new LinearLayout.LayoutParams(0,-2,1));add(root,greeting,0,8);}
         Map<String,Integer> counts=new HashMap<>();
         for(JSONObject node:parts){String k=kind(node);int n=counts.containsKey(k)?counts.get(k)+1:1;counts.put(k,n);String key=k+"_"+n;
-            String title=heading(node);if(title.isEmpty())title=t("Інформація","Informace","Information");StringBuilder s=new StringBuilder();collectText(node,s,0);
+            String title=heading(node);if(title.isEmpty())title=t("Інформація","Informace","Information");StringBuilder text=new StringBuilder();collectText(node,text,0);
             boolean locked=k.equals("promotion")||containsType(node,"form",0)||k.equals("other");
-            server.add(new HomeRules249.Section(key,title,s.toString(),locked));sources.put(key,node);
+            server.add(new HomeRules249.Section(key,title,text.toString(),locked));sources.put(key,node);
         }
+    }
+    private static void appendSections(List<JSONObject> parts,JSONObject node,int depth){
+        JSONArray cs=array(node,"children");boolean wrapper=depth<8&&node.optString("type").equals("card")&&node.optString("id").isEmpty()&&cs.length()>0;
+        for(int i=0;i<cs.length()&&wrapper;i++){JSONObject c=cs.optJSONObject(i);if(c==null||!c.optString("type").equals("card"))wrapper=false;}
+        if(wrapper){for(int i=0;i<cs.length();i++)appendSections(parts,cs.optJSONObject(i),depth+1);}else parts.add(node);
+    }
+    private static String shortcutTitle(JSONObject node){
+        String title=node.optString("title",node.optString("text",""));
+        if(title.matches("[0-9 .,+]+"))return node.optString("text",title);
+        if(title.equals("Разом тепліше")||title.equals("Together feels warmer"))return node.optString("text",title);
+        return title;
     }
     private void buildHeader(){
         quick=new NativeSiteUi.Flow(activity,8);quick.setTag("home249-shortcuts");renderShortcuts();add(root,quick,4,8);
@@ -127,16 +160,21 @@ public final class HomeScreen249 {
         controls.addView(button(t("Оновити дані","Obnovit data","Refresh data"),this::refresh));add(root,controls,4,10);
         LinearLayout searchBar=new LinearLayout(activity);searchBar.setGravity(Gravity.CENTER_VERTICAL);
         query=new EditText(activity);query.setSingleLine(true);query.setTextColor(theme.text);query.setHintTextColor(theme.muted);query.setHint(t("Пошук у блоках цієї головної","Hledat v blocích této stránky","Search blocks on this home"));query.setTextSize(15);query.setMinHeight(dp(48));query.setSelectAllOnFocus(false);query.setTag("home249-search");query.setContentDescription(t("Пошук у завантажених блоках головної","Hledat v načtených blocích domovské stránky","Search loaded home blocks"));
-        searchBar.addView(query,new LinearLayout.LayoutParams(0,-2,1));Button clear=button("×",()->{query.setText("");hideIme();root.post(()->{if(attached&&parentScroll!=null)parentScroll.scrollTo(0,beforeSearchY);});});clear.setContentDescription(t("Очистити пошук","Vymazat hledání","Clear search"));searchBar.addView(clear,new LinearLayout.LayoutParams(dp(48),dp(48)));add(root,searchBar,0,3);
+        searchBar.addView(query,new LinearLayout.LayoutParams(0,-2,1));Button clear=button("×",()->{int restore=beforeSearchY;query.setText("");hideIme();searchSession=false;root.post(()->{if(attached&&parentScroll!=null)parentScroll.scrollTo(0,restore);});});clear.setContentDescription(t("Очистити пошук","Vymazat hledání","Clear search"));searchBar.addView(clear,new LinearLayout.LayoutParams(dp(48),dp(48)));add(root,searchBar,0,3);
         scope=text("",12,false);scope.setTextColor(theme.muted);scope.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);add(root,scope,0,6);
-        query.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int af){if(s.length()==0){beforeSearchY=parentScroll==null?0:parentScroll.getScrollY();}}public void onTextChanged(CharSequence s,int st,int b,int c){renderVisibility();}public void afterTextChanged(Editable e){}});
-        resume=button(t("Продовжити читання","Pokračovat ve čtení","Continue reading"),()->jump(resumeId,resumeOffset,true));
+        searchMatches=new NativeSiteUi.Flow(activity,8);searchMatches.setTag("home249-search-matches");searchMatches.setVisibility(View.GONE);add(root,searchMatches,0,6);
+        query.setOnTouchListener((v,event)->{if(event.getActionMasked()==MotionEvent.ACTION_DOWN&&query.length()==0){beforeSearchY=parentScroll==null?0:parentScroll.getScrollY();searchSession=true;}return false;});
+        query.setOnFocusChangeListener((v,focused)->{if(focused&&!searchSession){beforeSearchY=parentScroll==null?0:parentScroll.getScrollY();searchSession=true;}});
+        query.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int af){if(s.length()==0&&!searchSession){beforeSearchY=parentScroll==null?0:parentScroll.getScrollY();searchSession=true;}}public void onTextChanged(CharSequence s,int st,int b,int c){renderVisibility();}public void afterTextChanged(Editable e){}});
+        final String savedResumeId=resumeId;final int savedResumeOffset=resumeOffset;
+        resume=button(t("Продовжити читання","Pokračovat ve čtení","Continue reading"),()->jump(savedResumeId,savedResumeOffset,true));
+        resume.setTag(savedResumeId);
         resume.setVisibility(HomeRules249.canResume(resumeId,resumeTime,System.currentTimeMillis(),server,hidden)?View.VISIBLE:View.GONE);add(root,resume,3,4);
     }
     private static String shortcutKey(JSONObject n){try{byte[] d=MessageDigest.getInstance("SHA-256").digest(HomeRules249.jobRoute(n.optString("route")).getBytes("UTF-8"));StringBuilder b=new StringBuilder();for(int i=0;i<12;i++)b.append(String.format(Locale.ROOT,"%02x",d[i]));return b.toString();}catch(Exception e){return Integer.toHexString(n.optString("route").hashCode());}}
     private void renderShortcuts(){
         quick.removeAllViews();List<JSONObject> sorted=new ArrayList<>(shortcuts);Collections.sort(sorted,(a,b)->Boolean.compare(pins.contains(shortcutKey(b)),pins.contains(shortcutKey(a))));
-        for(JSONObject n:sorted){String title=n.optString("title",n.optString("text")),id=shortcutKey(n);Button btn=button((pins.contains(id)?"★ ":"")+title,()->navigate(n.optString("route")));btn.setOnLongClickListener(v->{if(prefs==null||!host.alive())return false;if(!pins.remove(id))pins.add(id);persist();renderShortcuts();return true;});quick.addView(btn);}
+        for(JSONObject n:sorted){String title=shortcutTitle(n),id=shortcutKey(n);Button btn=button((pins.contains(id)?"★ ":"")+title,()->navigate(n.optString("route")));btn.setOnLongClickListener(v->{if(prefs==null||!host.alive())return false;if(!pins.remove(id))pins.add(id);persist();renderShortcuts();return true;});quick.addView(btn);}
     }
     private void buildSections(){
         for(HomeRules249.Section s:server){
@@ -172,15 +210,17 @@ public final class HomeScreen249 {
     }
     private void renderVisibility(){
         if(query==null)return;String q=query.getText().toString();int visible=0,total=0,index=0;
+        if(searchMatches!=null){searchMatches.removeAllViews();searchMatches.setVisibility(q.trim().isEmpty()?View.GONE:View.VISIBLE);}
         for(HomeRules249.Section s:HomeRules249.ordered(server,order)){
             LinearLayout wrap=wrappers.get(s.id);if(wrap==null)continue;if(!s.locked)total++;
             boolean shown=HomeRules249.visible(s,hidden,q);wrap.setVisibility(shown?View.VISIBLE:View.GONE);
-            if(shown&&!s.locked)visible++;
+            if(shown&&!s.locked){visible++;if(searchMatches!=null&&!q.trim().isEmpty())searchMatches.addView(button(s.title,()->jump(s.id,0,true)));}
             if(!s.locked){boolean folded=collapsed.contains(s.id)&&q.trim().isEmpty();bodies.get(s.id).setVisibility(folded?View.GONE:View.VISIBLE);headers.get(s.id).setText((folded?"▸ ":"▾ ")+s.title);headers.get(s.id).setContentDescription(s.title+" — "+(folded?t("розгорнути","rozbalit","expand"):t("згорнути","sbalit","collapse")));}
             if(sections.getChildAt(index)!=wrap){if(wrap.getParent() instanceof ViewGroup)((ViewGroup)wrap.getParent()).removeView(wrap);LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.bottomMargin=dp(16);sections.addView(wrap,index,params);}index++;
         }
         scope.setText(t("Показано блоків: ","Zobrazené bloky: ","Blocks shown: ")+visible+" / "+total+". "+t("Лише дані цього екрана, не весь сайт.","Pouze data této stránky, nikoli celý web.","Only this screen's data, not the whole site."));
         if(emptyState!=null)emptyState.setVisibility(visible==0?View.VISIBLE:View.GONE);
+        if(resume!=null){String id=String.valueOf(resume.getTag());resume.setVisibility(query.length()==0&&HomeRules249.canResume(id,resumeTime,System.currentTimeMillis(),server,hidden)?View.VISIBLE:View.GONE);}
     }
     private void customize(){
         if(prefs==null){dialog().setMessage(t("Увійдіть, щоб зберігати власну головну.","Pro uložení nastavení se přihlaste.","Sign in to save your home settings.")).setPositiveButton("OK",null).show();return;}
@@ -192,17 +232,18 @@ public final class HomeScreen249 {
         }};refreshRows[0].run();
         TextView note=text(t("Змінюється лише вигляд на цьому пристрої. Реклама та серверні форми залишаються на місці.","Mění se pouze vzhled na tomto zařízení. Reklama a serverové formuláře zůstávají na místě.","Only presentation on this device changes. Ads and server forms remain in place."),13,false);note.setTextColor(theme.muted);add(box,note,6,6);
         AlertDialog d=dialog().setTitle(t("Моя головна","Moje hlavní stránka","My home")).setView(sc).setPositiveButton(t("Готово","Hotovo","Done"),null).setNeutralButton(t("Скинути вигляд","Obnovit rozložení","Reset layout"),null).create();
-        d.setOnShowListener(x->d.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->dialog().setMessage(t("Повернути порядок і видимість блоків? Дані акаунта не зміняться.","Obnovit pořadí a viditelnost bloků? Účet se nezmění.","Reset block order and visibility? Account data will not change.")).setNegativeButton(t("Скасувати","Zrušit","Cancel"),null).setPositiveButton(t("Скинути","Obnovit","Reset"),(a,b)->{hidden.clear();collapsed.clear();pins.clear();order.clear();persist();renderShortcuts();renderVisibility();refreshRows[0].run();}).show()));d.show();styleDialog(d);
+        d.setOnShowListener(x->d.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->dialog().setMessage(t("Повернути порядок і видимість блоків? Дані акаунта не зміняться.","Obnovit pořadí a viditelnost bloků? Účet se nezmění.","Reset block order and visibility? Account data will not change.")).setNegativeButton(t("Скасувати","Zrušit","Cancel"),null).setPositiveButton(t("Скинути","Obnovit","Reset"),(a,b)->{hidden.clear();collapsed.clear();pins.clear();order.clear();layout.setChecked(true);grid=true;resumeId="";resumeTime=0;if(prefs!=null)prefs.edit().remove("resume-id").remove("resume-offset").remove("resume-time").apply();persist();renderShortcuts();renderVisibility();refreshRows[0].run();}).show()));d.show();styleDialog(d);
     }
     private AlertDialog.Builder dialog(){int color=theme.surface;double light=0.2126*((color>>16)&255)+0.7152*((color>>8)&255)+0.0722*(color&255);return new AlertDialog.Builder(new ContextThemeWrapper(activity,light<128?android.R.style.Theme_Material_Dialog_Alert:android.R.style.Theme_Material_Light_Dialog_Alert));}
     private void styleDialog(AlertDialog d){if(d.getWindow()!=null){d.getWindow().setBackgroundDrawable(shape(theme.surface,20));d.getWindow().setLayout(Math.min(activity.getResources().getDisplayMetrics().widthPixels-dp(24),dp(560)),WindowManager.LayoutParams.WRAP_CONTENT);}}
     private void jumpMenu(){List<String> labels=new ArrayList<>(),ids=new ArrayList<>();for(HomeRules249.Section s:HomeRules249.ordered(server,order))if(HomeRules249.visible(s,hidden,query.getText().toString())){labels.add(s.title);ids.add(s.id);}dialog().setTitle(t("Розділи головної","Sekce hlavní stránky","Home sections")).setItems(labels.toArray(new String[0]),(d,i)->jump(ids.get(i),0,true)).setNegativeButton(t("Скасувати","Zrušit","Cancel"),null).show();}
     private void persist(){if(prefs!=null)prefs.edit().putStringSet("hidden",new HashSet<>(hidden)).putStringSet("collapsed",new HashSet<>(collapsed)).putStringSet("pins",new HashSet<>(pins)).putString("order",HomeRules249.encodeOrder(order)).putBoolean("grid",grid).apply();}
     private void navigate(String route){persistPosition();hideIme();host.navigate(HomeRules249.jobRoute(route));}
-    private void refresh(){long now=SystemClock.uptimeMillis();if(now-lastRefresh<1500)return;lastRefresh=now;persistPosition();hideIme();host.navigate(model.optString("route","/?p=home"));}
+    private void refresh(){long now=SystemClock.uptimeMillis();if(lastRefresh!=0&&now-lastRefresh<1500)return;lastRefresh=now;persistPosition();hideIme();host.navigate(model.optString("route","/?p=home"));}
     private void hideIme(){View f=activity.getCurrentFocus();if(f!=null){android.view.inputmethod.InputMethodManager ime=(android.view.inputmethod.InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);if(ime!=null)ime.hideSoftInputFromWindow(f.getWindowToken(),0);f.clearFocus();}}
-    private int topOf(View v){if(parentScroll==null)return 0;Rect r=new Rect(0,0,v.getWidth(),v.getHeight());parentScroll.offsetDescendantRectToMyCoords(v,r);return r.top;}
+    private int topOf(View v){if(parentScroll==null)return 0;int top=0;View current=v;while(current!=parentScroll){top+=current.getTop();ViewParent p=current.getParent();if(!(p instanceof View))return 0;current=(View)p;}return top;}
     private void rememberPosition(){if(!attached||parentScroll==null||query==null||query.length()>0)return;int y=parentScroll.getScrollY();String found="";int offset=0;for(HomeRules249.Section s:HomeRules249.ordered(server,order)){View v=wrappers.get(s.id);if(v==null||v.getVisibility()!=View.VISIBLE)continue;int top=topOf(v);if(top<=y+dp(40)){found=s.id;offset=Math.max(0,y-top);}}if(!found.isEmpty()){resumeId=found;resumeOffset=offset;resumeTime=System.currentTimeMillis();}}
-    private void persistPosition(){rememberPosition();if(prefs!=null&&!resumeId.isEmpty())prefs.edit().putString("resume-id",resumeId).putInt("resume-offset",resumeOffset).putLong("resume-time",resumeTime).apply();}
+    private void persistPosition(){if(attached)rememberPosition();storePosition();}
+    private void storePosition(){if(prefs!=null&&!resumeId.isEmpty())prefs.edit().putString("resume-id",resumeId).putInt("resume-offset",resumeOffset).putLong("resume-time",resumeTime).apply();}
     private void jump(String id,int offset,boolean unfold){if(!host.alive()||id==null||parentScroll==null)return;View v=wrappers.get(id);if(v==null||v.getVisibility()!=View.VISIBLE)return;hideIme();if(unfold&&collapsed.remove(id)){persist();renderVisibility();}root.post(()->{if(attached&&parentScroll!=null)parentScroll.smoothScrollTo(0,Math.max(0,topOf(v)+offset));});}
 }
