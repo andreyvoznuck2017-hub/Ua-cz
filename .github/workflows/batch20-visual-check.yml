@@ -1,0 +1,76 @@
+name: Batch20 focused visual check
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['.github/workflows/batch20-visual-check.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  visual:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      QA_API: '36'
+      QA_AREA: visual
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail-compose247-unsigned-1
+          run-id: 37345161152
+          github-token: ${{ github.token }}
+          path: baseline247
+      - uses: actions/download-artifact@v4
+        with:
+          name: batch20-unsigned-1
+          run-id: 37354449484
+          github-token: ${{ github.token }}
+          path: candidate248
+      - name: Isolated disposable test signing only
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          echo 'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041  candidate248/Svoyi-2.4.8-unsigned.apk' | sha256sum --check
+          echo '8ae3acf1150b6422ec8309e7477c398d7461082e9bda35d00877ffdb08f5af42  baseline247/Svoyi-2.4.7-unsigned.apk' | sha256sum --check
+          keytool -genkeypair -keystore "$RUNNER_TEMP/visual-ci.p12" -storetype PKCS12 -storepass changeit -alias ci -keyalg RSA -keysize 2048 -validity 2 -dname 'CN=Disposable Visual Test Only'
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/visual-ci.p12" --ks-pass pass:changeit --out signed-input/baseline.apk baseline247/Svoyi-2.4.7-unsigned.apk
+          java -jar candidate248/apksigner.jar sign --ks "$RUNNER_TEMP/visual-ci.p12" --ks-pass pass:changeit --out signed-input/app.apk candidate248/Svoyi-2.4.8-unsigned.apk
+          python3 - <<'PY'
+          import hashlib,os,json,zipfile
+          from pathlib import Path
+          for src,dst in [('baseline247/Svoyi-2.4.7-unsigned.apk','signed-input/baseline.apk'),('candidate248/Svoyi-2.4.8-unsigned.apk','signed-input/app.apk')]:
+           with zipfile.ZipFile(src) as a,zipfile.ZipFile(dst) as b:
+            for name in a.namelist():
+             if not name.startswith('META-INF/'):assert a.read(name)==b.read(name)
+          digest=hashlib.sha256(Path('signed-input/app.apk').read_bytes()).hexdigest()
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('QA_SHA256='+digest+'\n')
+          Path('runtime-output/provenance.json').write_text(json.dumps({'unsignedCandidateSha256':'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041','ciApkSha256':digest,'temporaryTestSignature':True,'originalKeyAccessed':False,'allNonSignatureEntriesEqual':True,'notForUserInstallation':True},indent=2))
+          PY
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Real before and after screenshots with send receipt
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 -m batch20.entry
+      - name: Retain actual evidence and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch20-focused-visual-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
