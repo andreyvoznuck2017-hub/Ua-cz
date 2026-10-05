@@ -1,0 +1,52 @@
+name: Mail compatibility baseline 2.4.2
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-stability/baseline.py', '.github/workflows/mail-compatibility.yml']
+permissions:
+  contents: read
+concurrency:
+  group: mail-compatibility-baseline
+  cancel-in-progress: false
+jobs:
+  compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [26, 29, 31]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exactly the APK already delivered to the user
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p compatibility-input runtime-output
+          curl --fail --proto '=https' --location --max-time 80 --retry 2 'https://test.jkunis.eu/android-update-20261005-v242/Svoyi-Android-2.4.2-QA.apk' -o compatibility-input/app.apk
+          echo '32f42f59e8feef706a8b8c1aff7ac8852a6e9949e315d3cf942199e49f0b07bd  compatibility-input/app.apk' | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 playwright
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Test non-empty inbox thread send and restart
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: QA_APK=compatibility-input/app.apk QA_API=${{ matrix.api }} python3 mail-stability/baseline.py
+      - name: Save actual Android evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-baseline-api-${{ matrix.api }}-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
