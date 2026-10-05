@@ -1,0 +1,78 @@
+name: Isolated CI compose 2.4.6
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['mail-compose246/runtime.py', '.github/workflows/mail-compose246-ci.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35,36]
+    env:
+      QA_API: ${{ matrix.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mail-compose246-unsigned-1
+          run-id: 37336108124
+          github-token: ${{ github.token }}
+          path: candidate246
+      - name: Prepare disposable CI signing and exact code variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o signed-input/original245.apk
+          echo '95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb  signed-input/original245.apk' | sha256sum --check
+          echo 'd1e0ec9e62519ff5bcc7a717ba3fbec3eaa841ea7f6bbb5aadeea4672e14a9de  candidate246/Svoyi-2.4.6-unsigned.apk' | sha256sum --check
+          keytool -genkeypair -keystore "$RUNNER_TEMP/ci-only.p12" -storetype PKCS12 -storepass changeit -keypass changeit -alias ci -keyalg RSA -keysize 2048 -validity 2 -dname 'CN=Disposable Svoyi CI Only'
+          java -jar candidate246/apksigner.jar sign --ks "$RUNNER_TEMP/ci-only.p12" --ks-pass pass:changeit --out signed-input/baseline245.apk signed-input/original245.apk
+          java -jar candidate246/apksigner.jar sign --ks "$RUNNER_TEMP/ci-only.p12" --ks-pass pass:changeit --out signed-input/app.apk candidate246/Svoyi-2.4.6-unsigned.apk
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,zipfile
+          def h(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+          for before,after in [('signed-input/original245.apk','signed-input/baseline245.apk'),('candidate246/Svoyi-2.4.6-unsigned.apk','signed-input/app.apk')]:
+           with zipfile.ZipFile(before) as a,zipfile.ZipFile(after) as b:
+            for n in a.namelist():
+             if not n.startswith('META-INF/'):assert a.read(n)==b.read(n),n
+          actual=h('signed-input/app.apk');base=h('signed-input/baseline245.apk')
+          with open(os.environ['GITHUB_ENV'],'a') as e:e.write('QA_SHA256='+actual+'\n')
+          s=Path('mail-compose246/runtime.py').read_text().replace('95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb',base)
+          Path('runtime-ci246.py').write_text(s)
+          Path('runtime-output/ci-provenance.json').write_text(json.dumps({'codeBaselineSha256':h('signed-input/original245.apk'),'unsignedCandidateSha256':h('candidate246/Svoyi-2.4.6-unsigned.apk'),'ciApkSha256':actual,'ciBaselineSha256':base,'originalUserKeyAccessed':False,'originalSignatureCompatible':False,'temporarySigningOnly':True,'allNonSignatureEntriesByteEqual':True,'notForUserInstallation':True},indent=2))
+          PY
+          python3 -m pip install requests beautifulsoup4 playwright pillow
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Real reply picker send edit delete and lifecycle
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 runtime-ci246.py
+      - name: Keep evidence without private keys or distributable APK claims
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose246-ci-api-${{ matrix.api }}-${{ github.run_number }}
+          path: |
+            runtime-output/
+            !runtime-output/*.apk
+          retention-days: 7
+          if-no-files-found: error
