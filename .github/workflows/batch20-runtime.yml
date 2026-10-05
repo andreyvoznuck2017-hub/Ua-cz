@@ -70,7 +70,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back emulated -camera-front emulated
-          script: python3 -m batch20.${{ matrix.area }}_runtime
+          script: python3 -m batch20.entry
       - name: Keep failures and real screenshots without distribution-key claims
         if: always()
         uses: actions/upload-artifact@v4
