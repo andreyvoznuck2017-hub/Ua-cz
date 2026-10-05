@@ -2,13 +2,11 @@
 """Fix observed client/server capability mismatch. Only home screen projection changes."""
 from pathlib import Path
 p=Path('repair/NativeSiteUi.java');s=p.read_text()
-old='if (result != null && "home".equals(result.optString("page"))) homeModels.put(activity,result);'
-assert old in s
-s=s.replace(old,'if (result != null && "home".equals(result.optString("page"))) homeModels.put(activity,result);')
+# Intrinsic pixels must not shrink a vector on high-density Android displays.
+s=s.replace('public int getIntrinsicWidth(){return 24;}','public int getIntrinsicWidth(){return -1;}').replace('public int getIntrinsicHeight(){return 24;}','public int getIntrinsicHeight(){return -1;}')
 method=r'''
-    /** The legacy "visual" hint removes home-v3 because the old APK replaced it.
-     * The site-matching home needs those nodes. Other native screens keep their hints.
-     * This affects presentation only, never identity, CSRF, authorization or writes. */
+    /** The legacy visual hint removes home-v3 for the obsolete welcome replacement.
+     * Request full website home nodes; retain every hint for all other sections. */
     public static void prepareRequest(JSONObject request) throws org.json.JSONException {
         if(request==null||!"screen".equals(request.optString("op")))return;
         android.net.Uri route=android.net.Uri.parse(request.optString("route"));
@@ -41,9 +39,8 @@ p=Path('repair/stress-diagnostic.py');s=p.read_text()
 old="tap('content-desc','Головна');time.sleep(7);capture('android-10-home-top')"
 assert old in s
 s=s.replace(old,old+"\n    home_text=' '.join(n.get('text','') for n in ui().iter('node'))\n    check('home-website-welcome', 'Вітаємо' in home_text)\n    check('home-website-quick-links',all(label in home_text for label in ['Житло','Робота','Події','Групи']))\n    check('home-website-challenge','Фоточелендж' in home_text)")
-# Read-only geometry assertion for the actual profile header, not a screenshot simulation.
 old="tap('content-desc','Профіль');time.sleep(5);capture('android-11-cabinet')"
 assert old in s
 s=s.replace(old,old+"\n    nodes=list(ui().iter('node')); avatars=[n for n in nodes if n.get('content-desc')=='Відкрити фото профілю']; names=[n for n in nodes if n.get('text')=='QA Andrii']\n    if avatars and names:\n        import re\n        ab=list(map(int,re.findall(r'\\d+',avatars[0].get('bounds',''))));nb=list(map(int,re.findall(r'\\d+',names[0].get('bounds',''))))\n        overlap=max(ab[0],nb[0])<min(ab[2],nb[2]) and max(ab[1],nb[1])<min(ab[3],nb[3])\n        check('profile-avatar-name-no-overlap',not overlap)\n    else:check('profile-avatar-name-no-overlap',False,'Bounds targets missing')")
 p.write_text(s)
-print('Home capability, visible-presence policy and actual UI assertions patched')
+print('Home projection, visible-presence policy, vector sizing and runtime assertions patched')
