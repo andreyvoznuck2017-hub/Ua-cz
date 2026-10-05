@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [android-live-qa]
-    paths: ['batch20/qa.py','batch20/*_runtime.py','.github/workflows/batch20-runtime.yml']
+    paths: ['.github/workflows/batch20-runtime.yml']
 permissions:
   contents: read
   actions: read
@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        area: [mail,media]
+        area: [mail,media,home,profile]
         api: [36]
     env:
       QA_API: ${{ matrix.api }}
@@ -59,7 +59,7 @@ jobs:
           Path('runtime-output/ci-provenance.json').write_text(json.dumps({'candidateUnsignedSha256':h('candidate248/Svoyi-2.4.8-unsigned.apk'),'ciApkSha256':digest,'area':os.environ['QA_AREA'],'api':os.environ['QA_API'],'allNonSignatureEntriesEqual':True,'originalKeyAccessed':False,'originalSignatureCompatible':False,'notForUserInstallation':True},indent=2))
           PY
           python3 -m pip install requests beautifulsoup4 playwright pillow
-          command -v ffprobe
+          if [ "$QA_AREA" = media ]; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
           if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
       - name: Test actual Android controls with independent server receipts
         uses: reactivecircus/android-emulator-runner@v2
