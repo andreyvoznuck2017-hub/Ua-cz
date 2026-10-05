@@ -1,0 +1,47 @@
+name: Imagefix 2.4.5 Android 15 UI retry
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['image-fix245/ui_entry.py', '.github/workflows/image-fix245-android15.yml']
+permissions:
+  contents: read
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      QA_API: '35-retry'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Pin same signed APK and baseline
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-update-20261005-v245-imagefix/Svoyi-Android-2.4.5.apk' -o signed-input/app.apk
+          echo '95fe1ad2849c7719ecd4b5b559fbbb860eb69386ee2564f732e637f02ab38cdb  signed-input/app.apk' | sha256sum --check
+          curl --fail --proto '=https' --location --retry 2 --max-time 90 'https://test.jkunis.eu/android-qa-20261005-v244-r1/Svoyi-Android-2.4.4.apk' -o signed-input/baseline244.apk
+          echo '7c6441b64f81ad461eb763016bfab2d3b0cf0726b8db8705da96d1ad97907e10  signed-input/baseline244.apk' | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 playwright
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Same update session mail reaction and navigation assertions
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 image-fix245/ui_entry.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: imagefix245-android15-ui-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
