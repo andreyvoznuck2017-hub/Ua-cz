@@ -38,7 +38,7 @@ jobs:
           with zipfile.ZipFile('baseline247/Svoyi-2.4.7-unsigned.apk') as z:Path('tooling/classes3.dex').write_bytes(z.read('classes3.dex'))
           PY
           baksmali disassemble tooling/classes3.dex -o runtime-output/smali247
-          python3 batch20/inspect.py
+          python3 -P batch20/inspect.py
       - name: Retain measured reference not release claims
         if: always()
         uses: actions/upload-artifact@v4
