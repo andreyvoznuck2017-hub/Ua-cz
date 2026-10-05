@@ -13,6 +13,7 @@ class ThemePalette {int background,surface,text,muted,accent,border;}
 class NativeWelcome {Activity activity;ThemePalette colors;NativeJobsScreen.Host host;}
 class NativeJobsScreen {interface Host {boolean alive();void navigate(String route);View image(String url);}}
 class NativeSiteUi {static final class Flow extends ViewGroup {Flow(Context c,int gap){super(c);}protected void onLayout(boolean changed,int l,int t,int r,int b){}}}
+class Api {static java.net.CookieManager cookies;}
 JAVA
 javac -encoding UTF-8 -source 8 -target 8 -cp "$android" -d home249-checks/stub home249-checks/Signatures.java
 javac -encoding UTF-8 -source 8 -target 8 -cp "$android:home249-checks/stub" -d home249-checks/classes home-next249/HomeRules249.java home-next249/HomeScreen249.java
