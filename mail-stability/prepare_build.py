@@ -1,6 +1,19 @@
 #!/usr/bin/env python3
 from pathlib import Path
 p=Path('mail-stability/build_unsigned.py');s=p.read_text().replace("ROOT/'TestManifest.xml'","ROOT/'AndroidManifest.xml'")
+# A compiled static method may reuse its parameter register. Never append an invocation
+# that assumes p0 still contains the original receiver after the method body executes.
+start=s.index("for sig,helper in [('inbox(")
+end=s.index("for name in ['deleted','delivered']:",start)
+wrapper=r'''for sig,helper in [('inbox(Leu/svoyi/nativeapp/NativeMailScreen;)V','inbox'),('thread(Leu/svoyi/nativeapp/NativeMailScreen;)V','thread')]:
+ def wrap(s,helper=helper,sig=sig):
+  header=s.splitlines()[0];assert ' static ' in header
+  renamed=helper+'Core243(Leu/svoyi/nativeapp/NativeMailScreen;)V'
+  body=s.replace(sig,renamed,1)
+  return body+'\n\n'+header+'\n    .registers 1\n    invoke-static {p0}, Leu/svoyi/nativeapp/NativeSiteUi;->'+renamed+'\n    invoke-static {p0}, Leu/svoyi/nativeapp/MailSafety;->'+sig+'\n    return-void\n.end method'
+ change('NativeSiteUi.smali',sig,wrap)
+'''
+s=s[:start]+wrapper+s[end:]
 old="""for p in (ROOT/'helper').rglob('*.smali'):
  dest=ROOT/'smali'/p.relative_to(ROOT/'helper');assert not dest.exists();dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)"""
 new="""helper_files=list((ROOT/'helper').rglob('*.smali'));aliases={};reuse=set()
