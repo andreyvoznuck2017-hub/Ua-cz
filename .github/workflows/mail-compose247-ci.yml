@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [35,36]
+        # Explicit targeted infrastructure retry; ordinary pushes and manual runs test both APIs.
+        api: ${{ fromJSON(contains(github.event.head_commit.message, '[retry-api35]') && '[35]' || '[35,36]') }}
     env:
       QA_API: ${{ matrix.api }}
       QA_CI_ONLY: '1'
