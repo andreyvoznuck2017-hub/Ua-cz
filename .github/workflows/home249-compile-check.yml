@@ -1,0 +1,32 @@
+name: Home10 compile and rules checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-home10]
+    paths: ['home-next249/**','.github/workflows/home249-compile-check.yml']
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Rule tests and Android Java compilation only
+        run: bash home-next249/compile-check.sh
+      - name: Record evidence without APK or signing material
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: home249-compile-${{ github.run_number }}
+          path: |
+            home249-checks/unit-results.txt
+            home249-checks/status.json
+          if-no-files-found: warn
+          retention-days: 7
