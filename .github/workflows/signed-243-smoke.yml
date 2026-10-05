@@ -1,0 +1,46 @@
+name: Signed 2.4.3 final smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-live-qa]
+    paths: ['.github/workflows/signed-243-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exact original-signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-input runtime-output
+          curl --fail --location --retry 2 'https://test.jkunis.eu/android-qa-20261005-v243-r5b/Svoyi-Android-2.4.3.apk' -o signed-input/app.apk
+          echo '36071a614fece010136aba12917dfdfab95bbbe1ecd712a1d6b7a9c41cb95990  signed-input/app.apk' | sha256sum --check
+          python3 -m pip install requests beautifulsoup4 pillow playwright
+          python3 -m playwright install --with-deps chromium
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Open mail send attachments relaunch
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: QA_APK=signed-input/app.apk QA_PACKAGE=eu.svoyi.nativeapp QA_PHASE=r5 QA_OUTPUT=runtime-output python3 repair/stress-diagnostic.py
+      - name: Save evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-243-smoke-${{ github.run_number }}
+          path: runtime-output/
+          retention-days: 7
+          if-no-files-found: error
