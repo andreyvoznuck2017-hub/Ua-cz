@@ -6,6 +6,7 @@ on:
     paths:
       - 'mail-stability/*.java'
       - 'mail-stability/build_unsigned.py'
+      - 'mail-stability/prepare_build.py'
       - '.github/workflows/mail-stability-build.yml'
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libsmali-java
       - name: Compile exact changed classes and preserve unrelated APK entries
-        run: python3 mail-stability/build_unsigned.py
+        run: python3 mail-stability/prepare_build.py
       - name: Record output integrity
         run: |
           cd mail-candidate-output
