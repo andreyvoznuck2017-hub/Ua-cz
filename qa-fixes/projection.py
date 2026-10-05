@@ -2,11 +2,9 @@
 """Fix observed client/server capability mismatch. Only home screen projection changes."""
 from pathlib import Path
 p=Path('repair/NativeSiteUi.java');s=p.read_text()
-# Intrinsic pixels must not shrink a vector on high-density Android displays.
 s=s.replace('public int getIntrinsicWidth(){return 24;}','public int getIntrinsicWidth(){return -1;}').replace('public int getIntrinsicHeight(){return 24;}','public int getIntrinsicHeight(){return -1;}')
 method=r'''
-    /** The legacy visual hint removes home-v3 for the obsolete welcome replacement.
-     * Request full website home nodes; retain every hint for all other sections. */
+    /** Ask for full website home nodes, preserving hints for all other sections. */
     public static void prepareRequest(JSONObject request) throws org.json.JSONException {
         if(request==null||!"screen".equals(request.optString("op")))return;
         android.net.Uri route=android.net.Uri.parse(request.optString("route"));
@@ -29,7 +27,7 @@ p.write_text(s)
 b=Path('repair/build.py');s=b.read_text();marker="for p in (ROOT/'helper-smali').rglob('*.smali'):"
 assert marker in s
 patch='''def request_hint(old):
-    needle='    invoke-virtual {v1, v6, v5}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;'
+    needle='    const-string v6, "nativeScreens"\\n\\n    invoke-virtual {v1, v6, v5}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;'
     assert old.count(needle)==1, 'Native capability injection ambiguous'
     return old.replace(needle,needle+'\\n\\n    invoke-static {v1}, Leu/svoyi/nativeapp/NativeSiteUi;->prepareRequest(Lorg/json/JSONObject;)V',1)
 method(BASE/'Api.smali','transport(Lorg/json/JSONObject;Ljava/util/Map;II)Lorg/json/JSONObject;',request_hint)
