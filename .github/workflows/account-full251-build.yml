@@ -110,24 +110,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            set -eu
-            AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n1)"
-            mkdir -p smoke
-            for APK in candidate/*.apk; do
-              PKG="$("$AAPT" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")"
-              test -n "$PKG"
-              adb install -r "$APK"
-              adb logcat -c
-              adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
-              sleep 5
-              adb shell pidof "$PKG" > "smoke/$(basename "$APK").pid" || true
-              adb logcat -d > "smoke/$(basename "$APK").log"
-              if grep -A20 -B5 'FATAL EXCEPTION' "smoke/$(basename "$APK").log" | grep -q "$PKG"; then
-                echo "Fatal crash in $PKG"
-                exit 1
-              fi
-              adb uninstall "$PKG"
-            done
+            bash -lc 'set -euo pipefail; mkdir -p smoke; for SPEC in "candidate/Svoyi-Account-Site-Match-2.5.1-QA.apk|eu.svoyi.qa.accountsite" "candidate/Svoyi-Account-Plus-2.5.1-QA.apk|eu.svoyi.qa.accountplus"; do APK="${SPEC%%|*}"; PKG="${SPEC#*|}"; test -s "$APK"; adb install -r "$APK"; adb logcat -c; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 5; adb shell pidof "$PKG" > "smoke/$(basename "$APK").pid" || true; adb logcat -d > "smoke/$(basename "$APK").log"; if grep -A20 -B5 "FATAL EXCEPTION" "smoke/$(basename "$APK").log" | grep -q "$PKG"; then echo "Fatal crash in $PKG"; exit 1; fi; adb uninstall "$PKG"; done'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
