@@ -124,8 +124,30 @@ jobs:
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: bash -lc 'set -e; adb install -r -g qa-apks/Svoyi-Final-2.5.2-QA.apk; adb logcat -c; adb shell monkey -p eu.svoyi.qa.finish252 -c android.intent.category.LAUNCHER 1; sleep 8; adb shell pidof eu.svoyi.qa.finish252; ! adb logcat -d | grep -A20 "FATAL EXCEPTION" | grep -q eu.svoyi.qa.finish252'
 
+  smoke-android9:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish252-apks-${{ github.run_number }}
+          path: qa-apks
+      - name: Enable KVM
+        run: if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Legacy Android launch, large-font and LocationListener smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          arch: x86_64
+          target: google_apis
+          profile: pixel_4
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -lc 'set -e; adb shell settings put system font_scale 1.3; adb install -r -g qa-apks/Svoyi-Final-2.5.2-QA.apk; adb logcat -c; adb shell monkey -p eu.svoyi.qa.finish252 -c android.intent.category.LAUNCHER 1; sleep 10; adb shell pidof eu.svoyi.qa.finish252; LOG="$(adb logcat -d)"; ! printf "%s" "$LOG" | grep -q "AbstractMethodError"; ! printf "%s" "$LOG" | grep -A20 "FATAL EXCEPTION" | grep -q eu.svoyi.qa.finish252'
+
   publish:
-    needs: [qa-android16, smoke-android15]
+    needs: [qa-android16, smoke-android15, smoke-android9]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
