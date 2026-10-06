@@ -242,7 +242,10 @@ try:
     must("delete-confirm-dialog",wait(lambda:"Видалити для обох?" in blob(),8))
     must("delete-cancel",tap("Скасувати"));must("delete-cancel-keeps-message",not find_msg(b,a,mid=mid).get("deleted"))
     action(mid);must("delete-action-again",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
-    must("delete-confirm",tap("Видалити"));must("delete-peer-updated",wait(lambda:find_msg(b,a,mid=mid).get("deleted"),30));shot("deleted")
+    must("delete-confirm",tap("Видалити"))
+    # The server may return a deleted tombstone or omit the deleted message entirely.
+    must("delete-peer-updated",wait(lambda:(lambda m:(not m) or bool(m.get("deleted")))(find_msg(b,a,mid=mid)),30))
+    shot("deleted")
 
     # Picker cancellation and draft persistence.
     clear_current();enter("Draft255");hide_keyboard()
