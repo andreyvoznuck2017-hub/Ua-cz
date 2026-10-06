@@ -57,7 +57,7 @@ def rewrite_manifest(data,package,label,version_code):
                 strings.append(s)
         pos+=size
     assert pool is not None and pos==len(data)
-    oldpkg="eu.svoyi.nativeapp"
+    oldpkgs=("eu.svoyi.nativeapp","eu.svoyi.qa.before252")
     for typ,head,raw in chunks:
         if typ!=0x102:continue
         ns,name_idx,attr_start,attr_step,attr_count,*_=struct.unpack_from("<IIHHHHHH",raw,head)
@@ -70,8 +70,12 @@ def rewrite_manifest(data,package,label,version_code):
             if kind!=3 or val>=len(strings):continue
             cur=strings[val];new=None
             if element=="manifest" and aname=="package":new=package
-            elif aname in {"authorities","permission","readPermission","writePermission"} and cur.startswith(oldpkg):new=package+cur[len(oldpkg):]
-            elif element in {"permission","uses-permission","uses-permission-sdk-23"} and aname=="name" and cur.startswith(oldpkg):new=package+cur[len(oldpkg):]
+            elif aname in {"authorities","permission","readPermission","writePermission"}:
+                for oldpkg in oldpkgs:
+                    if cur.startswith(oldpkg):new=package+cur[len(oldpkg):];break
+            elif element in {"permission","uses-permission","uses-permission-sdk-23"} and aname=="name":
+                for oldpkg in oldpkgs:
+                    if cur.startswith(oldpkg):new=package+cur[len(oldpkg):];break
             elif element=="application" and aname=="label":new=label
             elif element=="manifest" and aname=="versionName":new="2.5.2-final-qa"
             if new is not None:strings[val]=new
