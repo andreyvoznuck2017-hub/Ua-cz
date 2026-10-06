@@ -29,9 +29,15 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libsmali-java
           curl --fail --proto '=https' --location --retry 3 --max-time 120 \
-            'https://test.jkunis.eu/android-test-249-owner-0ed539e8/Svoyi-Android-2.4.9.apk' \
-            -o account-full251/baseline249.apk
-          echo '0ed539e8fe58dee7a4f3220673a29f6ad8a29b834caae34ac7d779dc45f26332  account-full251/baseline249.apk' | sha256sum --check
+            'https://test.jkunis.eu/android-home10-249-qa-db5f499b-r2/Svoyi-2.4.9-Home10-Code-and-QA.zip' \
+            -o /tmp/home249.zip
+          mkdir -p /tmp/home249
+          unzip -q /tmp/home249.zip -d /tmp/home249
+          MATCH="$(find /tmp/home249 -type f -name '*.apk' -print0 | xargs -0 sha256sum | awk '$1=="db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa"{print $2; exit}')"
+          test -n "$MATCH"
+          cp "$MATCH" account-full251/baseline249.apk
+          echo 'db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa  account-full251/baseline249.apk' | sha256sum --check
+          sed -i 's/0ed539e8fe58dee7a4f3220673a29f6ad8a29b834caae34ac7d779dc45f26332/db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa/g' account-full251/build.py
       - name: Build and sign both isolated QA variants
         run: python3 account-full251/build.py
       - name: Upload account APKs
