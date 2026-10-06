@@ -23,9 +23,14 @@ assert hashlib.sha256(BASE_APK.read_bytes()).hexdigest() == BASE_SHA, "Wrong 2.4
 assert SOURCE.is_file(), "Missing AccountScreen251.java"
 
 sdk = Path(os.environ["ANDROID_HOME"])
-platforms = sorted((sdk / "platforms").glob("android-*"), key=lambda p: int(p.name.split("-")[-1]))
+platforms = []
+for p in (sdk / "platforms").glob("android-*"):
+    m = re.fullmatch(r"android-(\d+)", p.name)
+    if m:
+        platforms.append((int(m.group(1)), p))
+platforms.sort()
 assert platforms, "Android SDK platform missing"
-android = platforms[-1] / "android.jar"
+android = platforms[-1][1] / "android.jar"
 bts = sorted((sdk / "build-tools").glob("*"), key=lambda p: [int(x) for x in re.findall(r"\d+", p.name)])
 assert bts, "Android build-tools missing"
 bt = bts[-1]
