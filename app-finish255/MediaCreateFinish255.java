@@ -49,12 +49,15 @@ public final class MediaCreateFinish255 {
         walk(root,v->{
             if(v instanceof ImageView){
                 ImageView im=(ImageView)v;im.setAdjustViewBounds(true);
-                ViewParent p=im.getParent();
-                if((v.isClickable()||(p instanceof View&&((View)p).isClickable()))&&im.getMinimumHeight()<dp(a,96)){
-                    im.setMinimumHeight(dp(a,96));im.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                ViewParent p=im.getParent();String d=String.valueOf(im.getContentDescription()).toLowerCase(Locale.ROOT);
+                boolean namedMedia=d.contains("фото")||d.contains("photo")||d.contains("image")||d.contains("медіа")||d.contains("media")||d.contains("video");
+                boolean large=im.getWidth()>=dp(a,120)||im.getHeight()>=dp(a,90);
+                boolean interactive=v.isClickable()||(p instanceof View&&((View)p).isClickable());
+                if(interactive&&(namedMedia||large)){
+                    if(im.getMinimumHeight()<dp(a,96))im.setMinimumHeight(dp(a,96));
+                    im.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    if(im.getContentDescription()==null)im.setContentDescription("Відкрити медіа");
                 }
-                if(im.getContentDescription()==null&&(v.isClickable()||(p instanceof View&&((View)p).isClickable())))
-                    im.setContentDescription("Відкрити медіа");
             }else if(v instanceof VideoView){
                 v.setMinimumHeight(Math.max(v.getMinimumHeight(),dp(a,180)));
                 if(v.getContentDescription()==null)v.setContentDescription("Відео");
