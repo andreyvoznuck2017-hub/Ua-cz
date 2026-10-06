@@ -42,6 +42,12 @@ def run(*args, env=None, capture=False):
     subprocess.run(cmd, check=True, env=env)
     return ""
 
+def zread(z, item):
+    info = z.getinfo(item) if isinstance(item, str) else item
+    with z.open(info) as fp:
+        fp._expected_crc = None
+        return fp.read()
+
 bridge_template = '''package eu.svoyi.nativeapp;
 import android.app.Activity;
 import org.json.JSONObject;
@@ -171,7 +177,7 @@ def compile_helpers(variant: int, dst: Path):
 def patch_dex(variant: int, build: Path) -> bytes:
     z = zipfile.ZipFile(BASE_APK)
     original = build / "original.dex"
-    original.write_bytes(z.read('classes3.dex'))
+    original.write_bytes(zread(z, 'classes3.dex'))
     smali = build / "smali"
     run('baksmali', 'disassemble', original, '-o', smali)
     helper_dir = build / "compiled"
@@ -211,7 +217,7 @@ def patch_dex(variant: int, build: Path) -> bytes:
     return outdex.read_bytes()
 
 zbase = zipfile.ZipFile(BASE_APK)
-base_manifest = zbase.read('AndroidManifest.xml')
+base_manifest = zread(zbase, 'AndroidManifest.xml')
 results = []
 password = "svoyi-qa-account-251"
 keystore = WORK / 'account-qa.p12'
@@ -229,7 +235,7 @@ for cfg in VARIANTS:
         for info in zbase.infolist():
             if info.filename.startswith('META-INF/'):
                 continue
-            data = zbase.read(info.filename)
+            data = zread(zbase, info)
             if info.filename == 'classes3.dex': data = dex_bytes
             elif info.filename == 'AndroidManifest.xml': data = manifest
             out.writestr(info, data)
