@@ -1,0 +1,47 @@
+{
+  "version": "2.5.2-final-qa",
+  "before": {
+    "file": "Svoyi-Before-2.4.9-QA.apk",
+    "package": "eu.svoyi.qa.before252",
+    "sha256": "753b7daf0b67e2237186bb20fa2a7edd264172a902ef69fc19ce442019a521bf",
+    "bytes": 3675906,
+    "signature": [
+      "Verifies",
+      "Verified using v1 scheme (JAR signing): false",
+      "Verified using v2 scheme (APK Signature Scheme v2): true",
+      "Verified using v3 scheme (APK Signature Scheme v3): true",
+      "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+      "Verified using v3.2 scheme (APK Signature Scheme v3.2): false"
+    ]
+  },
+  "final": {
+    "file": "Svoyi-Final-2.5.2-QA.apk",
+    "package": "eu.svoyi.qa.finish252",
+    "sha256": "75cd47b533c04802705cf7353c4990c7cebc6569e0af833af68d582c9a17e7f1",
+    "bytes": 3692290,
+    "signature": [
+      "Verifies",
+      "Verified using v1 scheme (JAR signing): false",
+      "Verified using v2 scheme (APK Signature Scheme v2): true",
+      "Verified using v3 scheme (APK Signature Scheme v3): true",
+      "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+      "Verified using v3.2 scheme (APK Signature Scheme v3.2): false"
+    ]
+  },
+  "changed": [
+    "site-matched home",
+    "site-matched account",
+    "theme palette on home",
+    "localized generated labels",
+    "canonical local routes",
+    "jobs native route",
+    "cross-screen touch target polish",
+    "Android 8/9 LocationListener compatibility"
+  ],
+  "location_listener_compat_files": [
+    "eu/svoyi/nativeapp/HousingGps$2.smali",
+    "eu/svoyi/nativeapp/MainActivity$34.smali"
+  ],
+  "server_changed": false,
+  "owner_key_used": false
+}
