@@ -1,0 +1,162 @@
+name: Final app 2.5.4 interaction and mail QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-app-finish]
+    paths:
+      - 'app-finish254/**'
+      - '.github/workflows/app-finish254.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish252-apks-11
+          run-id: 37454925850
+          github-token: ${{ github.token }}
+          path: baseline252
+      - name: Prepare tools and verified 2.5.2 baseline
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          echo '3ba77212dd78df87338c77b4bdfb93c1471f3a11d30fa646fe88cdae4b30d5da  baseline252/Svoyi-Final-2.5.2-QA.apk' | sha256sum --check
+          cp baseline252/Svoyi-Final-2.5.2-QA.apk app-finish254/baseline252.apk
+      - name: Build 2.5.4 unsigned
+        run: python3 app-finish254/build.py
+      - name: Align and sign isolated QA APK
+        run: |
+          set -euo pipefail
+          BT="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n1)"
+          PASS="$(openssl rand -hex 18)"
+          keytool -genkeypair -keystore /tmp/finish254.p12 -storetype PKCS12 -storepass "$PASS" -keypass "$PASS" -alias finishqa -keyalg RSA -keysize 3072 -validity 3650 -dname 'CN=Svoyi Finish QA 2.5.4'
+          "$BT/zipalign" -f 4 app-finish254/releases/Svoyi-Final-2.5.4-QA-unsigned.apk /tmp/finish254-aligned.apk
+          "$BT/apksigner" sign --ks /tmp/finish254.p12 --ks-key-alias finishqa --ks-pass "pass:$PASS" --out app-finish254/releases/Svoyi-Final-2.5.4-QA.apk /tmp/finish254-aligned.apk
+          "$BT/apksigner" verify --verbose --print-certs app-finish254/releases/Svoyi-Final-2.5.4-QA.apk > app-finish254/releases/signature.txt
+          "$BT/aapt" dump badging app-finish254/releases/Svoyi-Final-2.5.4-QA.apk > app-finish254/releases/badging.txt
+          sha256sum app-finish254/releases/Svoyi-Final-2.5.4-QA.apk > app-finish254/releases/SHA256SUMS.txt
+          rm -f app-finish254/releases/Svoyi-Final-2.5.4-QA-unsigned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finish254-apk-${{ github.run_number }}
+          path: app-finish254/releases/
+          if-no-files-found: error
+          retention-days: 14
+
+  qa-android16:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish254-apk-${{ github.run_number }}
+          path: qa-apk
+      - run: python3 -m pip install requests beautifulsoup4
+      - run: if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Social routes, state restore and real two-account mail roundtrip
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -lc 'APK=qa-apk/Svoyi-Final-2.5.4-QA.apk QA_OUT=finish254-qa python3 app-finish254/qa.py'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: finish254-qa-${{ github.run_number }}
+          path: finish254-qa/
+          if-no-files-found: error
+          retention-days: 14
+
+  smoke-android15:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish254-apk-${{ github.run_number }}
+          path: qa-apk
+      - run: if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Android 15 launch smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -lc 'set -e; adb uninstall eu.svoyi.qa.finish252 || true; adb install -g qa-apk/Svoyi-Final-2.5.4-QA.apk; adb logcat -c; adb shell monkey -p eu.svoyi.qa.finish252 -c android.intent.category.LAUNCHER 1; sleep 9; adb shell pidof eu.svoyi.qa.finish252; ! adb logcat -d | grep -A20 "FATAL EXCEPTION" | grep -q eu.svoyi.qa.finish252'
+
+  smoke-android9:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish254-apk-${{ github.run_number }}
+          path: qa-apk
+      - run: if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Android 9 large-font legacy smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          arch: x86_64
+          target: google_apis
+          profile: pixel_4
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -lc 'set -e; adb shell settings put system font_scale 1.3; adb uninstall eu.svoyi.qa.finish252 || true; adb install -g qa-apk/Svoyi-Final-2.5.4-QA.apk; adb logcat -c; adb shell monkey -p eu.svoyi.qa.finish252 -c android.intent.category.LAUNCHER 1; sleep 10; adb shell pidof eu.svoyi.qa.finish252; LOG="$(adb logcat -d)"; ! printf "%s" "$LOG" | grep -q "AbstractMethodError"; ! printf "%s" "$LOG" | grep -A20 "FATAL EXCEPTION" | grep -q eu.svoyi.qa.finish252'
+
+  publish:
+    needs: [qa-android16, smoke-android15, smoke-android9]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: android-app-finish
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish254-apk-${{ github.run_number }}
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish254-qa-${{ github.run_number }}
+          path: proof
+      - name: Publish verified 2.5.4
+        run: |
+          set -euo pipefail
+          mkdir -p app-finish254/published
+          cp -f release/* app-finish254/published/
+          cp -f proof/checks.json app-finish254/published/
+          cp -f proof/dating.png app-finish254/published/ || true
+          cp -f proof/housing.png app-finish254/published/ || true
+          cp -f proof/mail-thread.png app-finish254/published/ || true
+          cp -f proof/mail-reply.png app-finish254/published/ || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app-finish254/published
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Publish verified interaction and mail batch 2.5.4'
+          git push origin HEAD:android-app-finish
