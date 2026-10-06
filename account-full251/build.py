@@ -238,7 +238,11 @@ for cfg in VARIANTS:
             data = zread(zbase, info)
             if info.filename == 'classes3.dex': data = dex_bytes
             elif info.filename == 'AndroidManifest.xml': data = manifest
-            out.writestr(info, data)
+            zi = zipfile.ZipInfo(info.filename, info.date_time)
+            zi.compress_type = info.compress_type
+            zi.external_attr = info.external_attr
+            zi.create_system = info.create_system
+            out.writestr(zi, data)
     aligned = build / 'aligned.apk'
     run(bt/'zipalign', '-f', '4', unsigned, aligned)
     final = OUT / cfg['filename']
