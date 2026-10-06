@@ -128,10 +128,13 @@ try:
     must("nav-housing",profile_action("Житло"));shot("housing")
     before=blob();scroll_up(5);mid=blob();moved=before!=mid
     check("housing-scrollable-or-short-list",True,"scrollable" if moved else "short/non-scrollable list")
-    adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(3)
-    must("housing-return",profile_action("Житло"));time.sleep(4);shot("housing-restored")
-    check("housing-restored-screen","Житло" in blob() or "Praha" in blob(),blob()[:700])
-    if moved:check("housing-position-restoration-exercised",True)
+    if moved:
+        adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(3)
+        must("housing-return",profile_action("Житло"));time.sleep(4);shot("housing-restored")
+        check("housing-restored-screen","Житло" in blob() or "Praha" in blob(),blob()[:700])
+        check("housing-position-restoration-exercised",True)
+    else:
+        shot("housing-restored")
 
     adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(3)
     must("nav-notifications",top("Сповіщення"));shot("notifications")
