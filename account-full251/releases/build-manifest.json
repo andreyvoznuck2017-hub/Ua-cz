@@ -1,0 +1,34 @@
+{
+  "version": "2.5.1-account-preview",
+  "baseline": "account-full251/baseline249.apk",
+  "baseline_sha256": "0fe9a5838eac76bfa2e1782608986f8a9465f5caf14f80bf35da53b189f3f49f",
+  "source_branch": "android-account-full",
+  "source_renderer": "account-full251/AccountScreen251.java",
+  "main_package_modified": false,
+  "server_changed": false,
+  "private_owner_signing_key_accessed": false,
+  "results": [
+    {
+      "variant": "site",
+      "package": "eu.svoyi.qa.accountsite",
+      "filename": "Svoyi-Account-Site-Match-2.5.1-QA.apk",
+      "sha256": "d9dc47d54696f9105d2fbde6925b8d236ef5a5a6f70eba2c23a1cd9967fe93bb",
+      "bytes": 3684098,
+      "signature_verified": true,
+      "baseline_sha256": "0fe9a5838eac76bfa2e1782608986f8a9465f5caf14f80bf35da53b189f3f49f",
+      "hook": "Batch20Ui.remember -> Account251Bridge.apply",
+      "owner_key_used": false
+    },
+    {
+      "variant": "plus",
+      "package": "eu.svoyi.qa.accountplus",
+      "filename": "Svoyi-Account-Plus-2.5.1-QA.apk",
+      "sha256": "592b6394824beb5e73ba950e9c10ec1ddbee96c6b042d69c92325351872fbab6",
+      "bytes": 3684098,
+      "signature_verified": true,
+      "baseline_sha256": "0fe9a5838eac76bfa2e1782608986f8a9465f5caf14f80bf35da53b189f3f49f",
+      "hook": "Batch20Ui.remember -> Account251Bridge.apply",
+      "owner_key_used": false
+    }
+  ]
+}
