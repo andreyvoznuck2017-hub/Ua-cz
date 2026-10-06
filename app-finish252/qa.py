@@ -69,10 +69,13 @@ def login(apk,pkg,email,pw,prefix):
     if went_home:time.sleep(8)
     capture(prefix+"-home");check(prefix+"-alive-home",alive(pkg))
 def uninstall(pkg):adb("uninstall",pkg,allow_fail=True)
+def scroll_top():
+    for _ in range(8):
+        adb("shell","input","swipe","520","650","520","1850","350");time.sleep(.25)
 def tap_scroll(label):
-    for _ in range(12):
+    for _ in range(14):
         if tap("text",label,contains=True) or tap("content-desc",label,contains=True):return True
-        adb("shell","input","swipe","520","1850","520","650","550");time.sleep(1)
+        adb("shell","input","swipe","520","1850","520","650","450");time.sleep(.6)
     return False
 
 def montage(a,b,out,title):
@@ -106,7 +109,7 @@ try:
     login(final,"eu.svoyi.qa.finish252",email,pw,"after")
     home_text=text_blob()
     check("after-home-site-sections",any(x in home_text for x in ["Дописи","Вакансії","Житло","Свої поруч"]),home_text[:600])
-    went_near=tap("text","Показати людей",contains=True) or tap("content-desc","Показати людей",contains=True)
+    scroll_top();went_near=tap_scroll("Показати людей")
     check("nearby-link-clickable",went_near)
     if went_near:
         time.sleep(8);capture("after-nearby");near=text_blob();check("nearby-does-not-return-home","Свої поруч" in near or "Люди поруч" in near,near[:800])
@@ -116,6 +119,7 @@ try:
         acc=text_blob()
         check("account-site-match-visible","Особистий кабінет" in acc or "Швидкий доступ" in acc,acc[:800])
         for label in ["Знайомства","Житло","Сповіщення","Безпека"]:
+            tap("content-desc","Профіль",contains=True) or tap("text","Профіль");time.sleep(3);scroll_top()
             ok=tap_scroll(label)
             check("account-action-"+label,ok)
             if ok:
