@@ -23,6 +23,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: batch20-unsigned-1
+          run-id: 37354449484
+          github-token: ${{ github.token }}
+          path: baseline248
       - name: Prepare exact 2.4.9 baseline and Android tools
         run: |
           set -euo pipefail
@@ -35,9 +41,39 @@ jobs:
           unzip -q /tmp/home249.zip -d /tmp/home249
           MATCH="$(find /tmp/home249 -type f -name '*.apk' -print0 | xargs -0 sha256sum | awk '$1=="db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa"{print $2; exit}')"
           test -n "$MATCH"
-          cp "$MATCH" account-full251/baseline249.apk
-          echo 'db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa  account-full251/baseline249.apk' | sha256sum --check
-          sed -i 's/0ed539e8fe58dee7a4f3220673a29f6ad8a29b834caae34ac7d779dc45f26332/db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa/g' account-full251/build.py
+          cp "$MATCH" /tmp/baseline249-raw.apk
+          echo 'db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa  /tmp/baseline249-raw.apk' | sha256sum --check
+          echo 'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041  baseline248/Svoyi-2.4.8-unsigned.apk' | sha256sum --check
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          old=zipfile.ZipFile('baseline248/Svoyi-2.4.8-unsigned.apk')
+          new=zipfile.ZipFile('/tmp/baseline249-raw.apk')
+          def zread(z,name):
+              info=z.getinfo(name)
+              with z.open(info) as fp:
+                  fp._expected_crc=None
+                  return fp.read()
+          manifest=zread(new,'AndroidManifest.xml')
+          classes3=zread(new,'classes3.dex')
+          out=zipfile.ZipFile('account-full251/baseline249.apk','w',zipfile.ZIP_DEFLATED)
+          for info in old.infolist():
+              data=old.read(info.filename)
+              if info.filename=='AndroidManifest.xml': data=manifest
+              elif info.filename=='classes3.dex': data=classes3
+              out.writestr(info,data)
+          out.close(); old.close(); new.close()
+          PY
+          REPAIRED_SHA="$(sha256sum account-full251/baseline249.apk | awk '{print $1}')"
+          python3 - "$REPAIRED_SHA" <<'PY'
+          import pathlib,sys
+          p=pathlib.Path('account-full251/build.py')
+          s=p.read_text()
+          old='0ed539e8fe58dee7a4f3220673a29f6ad8a29b834caae34ac7d779dc45f26332'
+          assert old in s
+          p.write_text(s.replace(old,sys.argv[1]))
+          PY
+          unzip -t account-full251/baseline249.apk >/dev/null
       - name: Build and sign both isolated QA variants
         run: python3 account-full251/build.py
       - name: Upload account APKs
