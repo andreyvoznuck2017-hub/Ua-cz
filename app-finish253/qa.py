@@ -42,14 +42,15 @@ def login(apk,pkg,email,pw,prefix):
  adb("install","-r","-g",str(apk),timeout=120);adb("logcat","-c");adb("shell","monkey","-p",pkg,"-c","android.intent.category.LAUNCHER","1");time.sleep(10)
  for _ in range(3):
   txt=blob()
-  if "Головна" in txt or "Кабінет" in txt or "QA Social253" in txt:break
+  if "QA Social253" in txt or "Вийти" in txt or "Особистий кабінет" in txt:break
   edits=[n for n in ui().iter("node") if n.get("class","")=="android.widget.EditText"]
   if len(edits)<2:break
-  tap("class","android.widget.EditText",False,0);adb("shell","input","text",email)
-  tap("class","android.widget.EditText",False,1);adb("shell","input","text",pw);adb("shell","input","keyevent","KEYCODE_BACK")
+  tap("class","android.widget.EditText",False,0);adb("shell","input","keyevent","KEYCODE_MOVE_END");adb("shell","input","text",email)
+  tap("class","android.widget.EditText",False,1);adb("shell","input","keyevent","KEYCODE_MOVE_END");adb("shell","input","text",pw);adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1)
   if not tap("text","Увійти"):break
-  time.sleep(9)
- check(prefix+"-login",alive(pkg) and "Неправильний email" not in blob(),blob()[:500])
+  time.sleep(10)
+ signed=("QA Social253" in blob() or "Вийти" in blob() or "Особистий кабінет" in blob()) and "ВХІД" not in blob()
+ check(prefix+"-login",alive(pkg) and signed,blob()[:700])
 def menu_section(label):
  for _ in range(2):
   if tap("content-desc","Відкрити меню",True) or tap("text","☰",False):time.sleep(1.2)
@@ -57,7 +58,11 @@ def menu_section(label):
   adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(.6)
  return False
 def screen(prefix,label,tokens):
- ok=menu_section(label);check(prefix+"-"+label+"-open",ok)
+ if label in ("Повідомлення","Сповіщення"):
+  ok=tap("text",label,False) or tap("content-desc",label,True)
+  if ok:time.sleep(6)
+ else:ok=menu_section(label)
+ check(prefix+"-"+label+"-open",ok)
  if not ok:return
  capture(prefix+"-"+label.lower().replace(" ","-"))
  txt=blob();check(prefix+"-"+label+"-content",any(t.lower() in txt.lower() for t in tokens),txt[:700])
@@ -85,13 +90,13 @@ try:
  for label,toks in [("Знайомства",["Знайом","Поруч","Лайк"]),("Житло",["Житло","Обране"]),("Групи",["Груп"]),("Повідомлення",["Повідом","діалог"]),("Сповіщення",["Сповіщ","Непроч"])]:
   screen("after",label,toks)
  # Focus the messages search/composer-like field and ensure app survives IME resize.
- menu_section("Повідомлення");time.sleep(3)
+ (tap("text","Повідомлення",False) or tap("content-desc","Повідомлення",True));time.sleep(5)
  edits=[n for n in ui().iter("node") if n.get("class","")=="android.widget.EditText"]
  if edits:
   tap("class","android.widget.EditText",False,len(edits)-1);time.sleep(2);check("mail-ime-focus-survives",alive("eu.svoyi.qa.finish253"));adb("shell","input","keyevent","KEYCODE_BACK")
  else:check("mail-ime-focus-survives",True,"No editable field on empty inbox")
  # Short offline pass across a loaded social screen.
- menu_section("Групи");adb("shell","svc","wifi","disable",allow_fail=True);adb("shell","svc","data","disable",allow_fail=True);time.sleep(2);check("offline-loaded-screen-survives",alive("eu.svoyi.qa.finish253"));adb("shell","svc","wifi","enable",allow_fail=True);adb("shell","svc","data","enable",allow_fail=True)
+ menu_section("Групи");time.sleep(3);adb("shell","svc","wifi","disable",allow_fail=True);adb("shell","svc","data","disable",allow_fail=True);time.sleep(2);check("offline-loaded-screen-survives",alive("eu.svoyi.qa.finish253"));adb("shell","svc","wifi","enable",allow_fail=True);adb("shell","svc","data","enable",allow_fail=True)
  # Process restart keeps session.
  adb("shell","am","force-stop","eu.svoyi.qa.finish253");adb("shell","monkey","-p","eu.svoyi.qa.finish253","-c","android.intent.category.LAUNCHER","1");time.sleep(8);rt=blob();check("session-after-restart","Увійти" not in rt and alive("eu.svoyi.qa.finish253"),rt[:500])
  log=adb("logcat","-d","-v","threadtime").decode(errors="replace");save("after-logcat.txt",log);check("no-fatal","FATAL EXCEPTION" not in log)
