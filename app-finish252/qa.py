@@ -70,7 +70,7 @@ def login(apk,pkg,email,pw,prefix):
     capture(prefix+"-home");check(prefix+"-alive-home",alive(pkg))
 def uninstall(pkg):adb("uninstall",pkg,allow_fail=True)
 def tap_scroll(label):
-    for _ in range(7):
+    for _ in range(12):
         if tap("text",label,contains=True) or tap("content-desc",label,contains=True):return True
         adb("shell","input","swipe","520","1850","520","650","550");time.sleep(1)
     return False
