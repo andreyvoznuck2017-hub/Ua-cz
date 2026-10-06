@@ -66,6 +66,8 @@ def screen(prefix,label,tokens):
  if not ok:return
  capture(prefix+"-"+label.lower().replace(" ","-"))
  txt=blob();check(prefix+"-"+label+"-content",any(t.lower() in txt.lower() for t in tokens),txt[:700])
+ if prefix=="after" and label=="Знайомства":
+  check("dating-profiles-render","Не вдалося показати анкети" not in txt and "Оновити розділ" not in txt,txt[:1200])
 def montage(before,after,out,title):
  a=Image.open(OUT/before).convert("RGB");b=Image.open(OUT/after).convert("RGB");h=max(a.height,b.height);c=Image.new("RGB",(a.width+b.width,h+80),"white");c.paste(a,(0,80));c.paste(b,(a.width,80));d=ImageDraw.Draw(c);d.text((20,20),"ДО — 2.5.2",fill="black");d.text((a.width+20,20),"ПІСЛЯ — 2.5.3",fill="black");d.text((20,48),title,fill="black");c.save(OUT/out)
 
