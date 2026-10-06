@@ -46,12 +46,27 @@ def account():
 def login(email,pw):
     adb("uninstall",PKG,allow_fail=True);adb("install","-g",str(APK),timeout=120);adb("logcat","-c")
     adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(10)
+    # A transient origin/network failure must exercise the app's Retry path instead of poisoning the whole UI run.
+    for attempt in range(4):
+        txt=blob()
+        if "Не вдалося з’єднатися" not in txt and "Спробувати знову" not in txt: break
+        if tap_text("Спробувати знову"):
+            time.sleep(8)
+        else:
+            adb("shell","am","force-stop",PKG,allow_fail=True);adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8)
     edits=[n for n in ui().iter("node") if n.get("class")=="android.widget.EditText"]
     if len(edits)>=2 and "Увійти" in blob():
         for idx,val in [(0,email),(1,pw)]:
             n=edits[idx];nums=list(map(int,re.findall(r"\d+",n.get("bounds",""))));x1,y1,x2,y2=nums;adb("shell","input","tap",str((x1+x2)//2),str((y1+y2)//2));adb("shell","input","text",val)
-        adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1);tap_text("Увійти");time.sleep(10)
-    check("login", "Увійти" not in blob(), blob()[:500])
+        adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1);tap_text("Увійти")
+        for _ in range(4):
+            time.sleep(5)
+            txt=blob()
+            if "Не вдалося з’єднатися" in txt or "Спробувати знову" in txt:
+                tap_text("Спробувати знову");continue
+            if "Увійти" not in txt:break
+    final=blob()
+    check("login", "Увійти" not in final and "Не вдалося з’єднатися" not in final, final[:500])
 def find_scroll(label,down=True,steps=14):
     for _ in range(steps):
         if tap_text(label):time.sleep(7);return True
