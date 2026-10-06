@@ -5,7 +5,7 @@ from pathlib import Path
 
 BASE=Path("app-finish253/baseline252.apk")
 OUT=Path("app-finish253/releases");WORK=Path("app-finish253/.build")
-SOURCES=[Path("app-finish253/SocialUi253.java"),Path("app-finish253/AppFinish253.java")]
+SOURCES=[Path("app-finish253/SocialUi253.java"),Path("app-finish253/AppFinish253.java"),Path("app-finish253/DatingFix253.java")]
 OUT.mkdir(parents=True,exist_ok=True)
 if WORK.exists():shutil.rmtree(WORK)
 WORK.mkdir(parents=True)
@@ -120,6 +120,16 @@ first=m.group().splitlines()[0]
 new=first+"\n    .locals 1\n    invoke-static {p0}, Leu/svoyi/nativeapp/AppFinish253;->route(Ljava/lang/String;)Ljava/lang/String;\n    move-result-object v0\n    return-object v0\n.end method"
 p.write_text(src[:m.start()]+new+src[m.end():])
 
+# Server dating nodes can have id="" while route contains the real numeric view id.
+dating=base/"NativeDatingScreen.smali"
+assert dating.is_file(),"NativeDatingScreen missing"
+dating_src=dating.read_text()
+old_ref="Leu/svoyi/nativeapp/DatingOwnProfile;->id(Lorg/json/JSONObject;)I"
+new_ref="Leu/svoyi/nativeapp/DatingFix253;->profileId(Lorg/json/JSONObject;)I"
+dating_count=dating_src.count(old_ref)
+assert dating_count==3,("dating id reference count",dating_count)
+dating.write_text(dating_src.replace(old_ref,new_ref))
+
 added=[]
 for hp in (WORK/"helper").rglob("*.smali"):
  rel=hp.relative_to(WORK/"helper");dest=WORK/"smali"/rel
@@ -131,7 +141,7 @@ for hp in (WORK/"helper").rglob("*.smali"):
    assert not dest.exists();dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(txt);added.append(str(dest.relative_to(WORK/"smali")));continue
   raise AssertionError("helper collision "+str(rel))
  dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(hp,dest);added.append(str(rel))
-assert any("AppFinish253" in x for x in added) and any("SocialUi253" in x for x in added)
+assert any("AppFinish253" in x for x in added) and any("SocialUi253" in x for x in added) and any("DatingFix253" in x for x in added)
 run("smali","assemble",WORK/"smali","-o",WORK/"classes3.dex")
 
 base_manifest=zread(z,"AndroidManifest.xml")
@@ -164,7 +174,7 @@ report={"version":"2.5.3-social-core","baseline_sha256":hashlib.sha256(BASE.read
 "mail IME resize","mail composer multi-line visibility","mail composer 50dp minimum","hide bottom navigation while typing","hide mail toolbar while typing",
 "restore navigation after typing","notification row targets","notification tabs","horizontal strip cleanup","button capitalization cleanup",
 "edit field sizing","large media scaling","legacy people route normalization","dating legacy-view normalization","housing favorites route normalization",
-"groups mine route normalization","preserve all original click handlers","preserve server permissions and transport","no server/database change"
+"groups mine route normalization","dating profile id fallback from numeric view route","preserve all original click handlers","preserve server permissions and transport","no server/database change"
 ],"owner_key_used":False,"server_changed":False}
 (OUT/"verification.json").write_text(json.dumps(report,ensure_ascii=False,indent=2))
 (OUT/"SHA256SUMS.txt").write_text(before["sha256"]+"  "+before["file"]+"\n"+after["sha256"]+"  "+after["file"]+"\n")
