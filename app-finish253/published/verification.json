@@ -4,15 +4,15 @@
   "before": {
     "file": "Svoyi-Before-2.5.2-QA.apk",
     "package": "eu.svoyi.qa.before253",
-    "sha256": "5c9cdd54f0f263081688827df298eedb3134a1eb22f853a71caa9c373cf7791a",
+    "sha256": "bd067d3bae036ac83ac420918a1da05cc27481f8565b66d4556dfbd2107cec48",
     "bytes": 3692290,
     "verified": true
   },
   "after": {
     "file": "Svoyi-Social-Core-2.5.3-QA.apk",
     "package": "eu.svoyi.qa.finish253",
-    "sha256": "158c31a834d34020fc9fb78a74b9c0020d1a589e77805d2644099c1803cb57c6",
-    "bytes": 3696386,
+    "sha256": "4460bc8b88210928cf310a20d9b49d1c6fb9d887bca1db100b8c4238f0865899",
+    "bytes": 3700482,
     "verified": true
   },
   "tasks": [
@@ -42,6 +42,7 @@
     "dating legacy-view normalization",
     "housing favorites route normalization",
     "groups mine route normalization",
+    "dating profile id fallback from numeric view route",
     "preserve all original click handlers",
     "preserve server permissions and transport",
     "no server/database change"
