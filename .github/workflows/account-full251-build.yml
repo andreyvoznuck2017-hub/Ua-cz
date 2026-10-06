@@ -1,0 +1,118 @@
+name: Build account preview APKs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-account-full]
+    paths:
+      - 'account-full251/AccountScreen251.java'
+      - 'account-full251/build.py'
+      - '.github/workflows/account-full251-build.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare exact 2.4.9 baseline and Android tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          curl --fail --proto '=https' --location --retry 3 --max-time 120 \
+            'https://test.jkunis.eu/android-test-249-owner-0ed539e8/Svoyi-Android-2.4.9.apk' \
+            -o account-full251/baseline249.apk
+          echo '0ed539e8fe58dee7a4f3220673a29f6ad8a29b834caae34ac7d779dc45f26332  account-full251/baseline249.apk' | sha256sum --check
+      - name: Build and sign both isolated QA variants
+        run: python3 account-full251/build.py
+      - name: Upload account APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-previews-${{ github.run_number }}
+          path: account-full251/releases/
+          if-no-files-found: error
+          retention-days: 14
+
+  smoke:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: account-previews-${{ github.run_number }}
+          path: candidate
+      - name: Enable KVM
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - name: Install and launch both APKs on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -euo pipefail
+            AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n1)"
+            mkdir -p smoke
+            for APK in candidate/*.apk; do
+              PKG="$("$AAPT" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")"
+              test -n "$PKG"
+              adb install -r "$APK"
+              adb logcat -c
+              adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+              sleep 5
+              adb shell pidof "$PKG" > "smoke/$(basename "$APK").pid" || true
+              adb logcat -d > "smoke/$(basename "$APK").log"
+              if grep -A20 -B5 'FATAL EXCEPTION' "smoke/$(basename "$APK").log" | grep -q "$PKG"; then
+                echo "Fatal crash in $PKG"
+                exit 1
+              fi
+              adb uninstall "$PKG"
+            done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-preview-smoke-${{ github.run_number }}
+          path: smoke/
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: smoke
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: android-account-full
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: account-previews-${{ github.run_number }}
+          path: published
+      - name: Publish verified APKs to branch
+        run: |
+          set -euo pipefail
+          mkdir -p account-full251/releases
+          cp -f published/* account-full251/releases/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add account-full251/releases
+          if git diff --cached --quiet; then
+            echo 'No release changes'
+            exit 0
+          fi
+          git commit -m 'Publish verified account preview APKs'
+          git push origin HEAD:android-account-full
