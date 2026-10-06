@@ -91,22 +91,31 @@ try:
     for route in ["/?p=dating","/?p=nearby","/?p=housing","/?p=groups","/?p=feed","/?p=notifications"]:
         res=api(s,{"op":"screen","route":route});check("api-"+re.sub(r"\W+","-",route).strip("-"),bool(res.get("page") or res.get("nodes")),res.get("page",""))
     login(email,pw)
-    for label,key in [("Знайомства","dating"),("Житло","housing"),("Групи","groups"),("Сповіщення","notifications"),("Повідомлення","mail")]:
-        adb("shell","input","keyevent","KEYCODE_BACK",allow_fail=True);time.sleep(2)
-        ok=nav(label);check("nav-"+key,ok)
+    # Cabinet-owned actions: reopen Profile first, then scroll to the action.
+    for label,key in [("Знайомства","dating"),("Житло","housing"),("Сповіщення","notifications")]:
+        tap_text("Профіль");time.sleep(4)
+        for _ in range(10):adb("shell","input","swipe","520","650","520","1800","260")
+        ok=find_scroll(label,True,15);check("nav-"+key,ok)
         if ok:
-            shot("after-"+key);txt=blob()
-            check("alive-"+key,bool(adb("shell","pidof",PKG,allow_fail=True).strip()),txt[:500])
-            if key=="mail":
-                edits=[n for n in ui().iter("node") if n.get("class")=="android.widget.EditText"]
-                check("mail-edit-field-present",len(edits)>0,str(len(edits)))
-                if edits:
-                    nums=list(map(int,re.findall(r"\d+",edits[-1].get("bounds",""))));check("mail-input-height",len(nums)==4 and nums[3]-nums[1]>=48,str(nums))
+            shot("after-"+key);txt=blob();check("alive-"+key,bool(adb("shell","pidof",PKG,allow_fail=True).strip()),txt[:500])
             if key=="dating":
-                imgs=[n for n in ui().iter("node") if n.get("class")=="android.widget.ImageView"]
-                check("dating-images-present",len(imgs)>0,str(len(imgs)))
-            if key=="housing":
-                check("housing-screen-content",any(x in txt for x in ["Житло","Квартира","кімнат","Прага","Praha"]),txt[:700])
+                imgs=[n for n in ui().iter("node") if n.get("class")=="android.widget.ImageView"];check("dating-images-present",len(imgs)>0,str(len(imgs)))
+            if key=="housing":check("housing-screen-content",any(x in txt for x in ["Житло","Квартира","кімнат","Прага","Praha"]),txt[:700])
+    # Messages has a permanent bottom-tab entry; test it directly.
+    ok=tap_text("Повідомлення");time.sleep(7) if ok else None;check("nav-mail",ok)
+    if ok:
+        shot("after-mail");txt=blob();check("alive-mail",bool(adb("shell","pidof",PKG,allow_fail=True).strip()),txt[:500])
+        edits=[n for n in ui().iter("node") if n.get("class")=="android.widget.EditText"];check("mail-edit-field-present",len(edits)>0,str(len(edits)))
+        if edits:
+            nums=list(map(int,re.findall(r"\d+",edits[-1].get("bounds",""))));check("mail-input-height",len(nums)==4 and nums[3]-nums[1]>=48,str(nums))
+    # Groups is a drawer section, so enter Home and search the drawer.
+    tap_text("Головна");time.sleep(4)
+    ok=False
+    if tap_text("Відкрити меню"):
+        time.sleep(2);ok=find_scroll("Групи",True,18)
+    check("nav-groups",ok)
+    if ok:
+        shot("after-groups");txt=blob();check("alive-groups",bool(adb("shell","pidof",PKG,allow_fail=True).strip()),txt[:500])
     log=adb("logcat","-d","-v","threadtime").decode(errors="replace");save("logcat.txt",log)
     check("no-fatal","FATAL EXCEPTION" not in log)
 except Exception as e:
