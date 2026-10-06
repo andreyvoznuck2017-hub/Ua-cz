@@ -1,0 +1,41 @@
+name: Dating inventory 2.5.3
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-app-finish-253]
+    paths: ['.github/workflows/app-finish253-inventory.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: finish252-apks-11
+          run-id: 37454925850
+          github-token: ${{ github.token }}
+          path: baseline
+      - name: Decompile dating classes
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          mkdir -p inv/dex inv/smali inv/out
+          unzip -p baseline/Svoyi-Final-2.5.2-QA.apk classes3.dex > inv/dex/classes3.dex
+          baksmali disassemble inv/dex/classes3.dex -o inv/smali
+          cp inv/smali/eu/svoyi/nativeapp/NativeDatingScreen.smali inv/out/
+          cp inv/smali/eu/svoyi/nativeapp/DatingScreenPolicy.smali inv/out/
+          cp inv/smali/eu/svoyi/nativeapp/DatingPresentation.smali inv/out/
+          cp inv/smali/eu/svoyi/nativeapp/DatingRoute.smali inv/out/
+          cp inv/smali/eu/svoyi/nativeapp/DatingFilterModel.smali inv/out/
+          grep -R -n -E 'Не вдалося показати анкети|неповними даними|incomplete|profile' inv/out > inv/out/matches.txt || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dating-inventory-${{ github.run_number }}
+          path: inv/out/
+          retention-days: 3
+          if-no-files-found: error
