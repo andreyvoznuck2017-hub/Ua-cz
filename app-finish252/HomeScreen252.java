@@ -40,7 +40,8 @@ public final class HomeScreen252 {
         parse(nodes);
         Collections.sort(sections,(x,y)->Integer.compare(sectionOrder(x),sectionOrder(y)));
         add(root,hero(),0,variant==SITE?12:10);
-        add(root,variant==SITE?siteStats():plusStats(),0,12);
+        add(root,variant==SITE?siteStats():plusStats(),0,8);
+        add(root,nearbyQuick(),0,12);
         for(JSONObject n:sections){View v=section(n);if(v!=null)add(root,v,0,12);}
         TextView footer=text(t("Свої у Європі","Svoji v Evropě","Svoyi in Europe"),12,true,muted);footer.setGravity(Gravity.CENTER);add(root,footer,8,20);
     }
@@ -92,6 +93,19 @@ public final class HomeScreen252 {
         View image=url.isEmpty()?null:host.image(url);if(image instanceof ImageView)((ImageView)image).setScaleType(ImageView.ScaleType.CENTER_CROP);
         if(image!=null)frame.addView(image,new FrameLayout.LayoutParams(-1,-1));else{TextView t=text("👤",26,false,muted);t.setGravity(Gravity.CENTER);frame.addView(t,new FrameLayout.LayoutParams(-1,-1));}
         return frame;
+    }
+
+    private View nearbyQuick(){
+        LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(13),dp(11),dp(13),dp(11));row.setBackground(round(card,14,border));row.setElevation(dp(1));
+        TextView icon=text("👥",22,false,text);LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(38),dp(44));row.addView(icon,ip);
+        LinearLayout copy=column();TextView title=text(t("Люди поруч","Lidé poblíž","People nearby"),15,true,text);add(copy,title,0,2);
+        TextView sub=text(t("Знайти своїх у вашому місті","Najděte své lidi ve vašem městě","Find people in your city"),12,false,muted);sub.setMaxLines(1);add(copy,sub,0,0);
+        row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
+        TextView action=text(t("Показати всіх →","Zobrazit všechny →","Show all →"),13,true,link);action.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);row.addView(action,new LinearLayout.LayoutParams(-2,dp(44)));
+        row.setFocusable(true);row.setContentDescription(t("Люди поруч. Показати всіх","Lidé poblíž. Zobrazit všechny","People nearby. Show all"));
+        row.setOnClickListener(v->{if(host.alive())host.navigate(AppFinish252.route("/?p=nearby"));});
+        return row;
     }
 
     private View siteStats(){
