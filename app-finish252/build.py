@@ -134,6 +134,22 @@ replace_method(p,"route(Ljava/lang/String;)Ljava/lang/String;",
     return-object p0
 .end method''')
 
+# Android 8/9 compatibility: every LocationListener must implement legacy abstract callbacks.
+location_compat=[]
+for q in (WORK/"smali").rglob("*.smali"):
+    txt=q.read_text()
+    if ".implements Landroid/location/LocationListener;" not in txt: continue
+    methods=[]
+    if "onStatusChanged(Ljava/lang/String;ILandroid/os/Bundle;)V" not in txt:
+        methods.append(".method public onStatusChanged(Ljava/lang/String;ILandroid/os/Bundle;)V\n    .locals 0\n    return-void\n.end method\n")
+    if "onProviderEnabled(Ljava/lang/String;)V" not in txt:
+        methods.append(".method public onProviderEnabled(Ljava/lang/String;)V\n    .locals 0\n    return-void\n.end method\n")
+    if "onProviderDisabled(Ljava/lang/String;)V" not in txt:
+        methods.append(".method public onProviderDisabled(Ljava/lang/String;)V\n    .locals 0\n    return-void\n.end method\n")
+    if methods:
+        q.write_text(txt+"\n"+"\n".join(methods))
+        location_compat.append(str(q.relative_to(WORK/"smali")))
+
 added=[]
 for hp in (WORK/"helper").rglob("*.smali"):
     rel=hp.relative_to(WORK/"helper");dest=WORK/"smali"/rel
@@ -181,7 +197,8 @@ before=package("Svoyi-Before-2.4.9-QA.apk","eu.svoyi.qa.before252","Свої —
 final=package("Svoyi-Final-2.5.2-QA.apk","eu.svoyi.qa.finish252","Свої — Final QA 2.5.2",True)
 (OUT/"build-manifest.json").write_text(json.dumps({
     "version":"2.5.2-final-qa","before":before,"final":final,
-    "changed":["site-matched home","site-matched account","theme palette on home","localized generated labels","canonical local routes","jobs native route","cross-screen touch target polish"],
+    "changed":["site-matched home","site-matched account","theme palette on home","localized generated labels","canonical local routes","jobs native route","cross-screen touch target polish","Android 8/9 LocationListener compatibility"],
+    "location_listener_compat_files":location_compat,
     "server_changed":False,"owner_key_used":False
 },ensure_ascii=False,indent=2))
 (OUT/"SHA256SUMS.txt").write_text(f"{before['sha256']}  {before['file']}\n{final['sha256']}  {final['file']}\n")
