@@ -61,7 +61,11 @@ jobs:
               data=old.read(info.filename)
               if info.filename=='AndroidManifest.xml': data=manifest
               elif info.filename=='classes3.dex': data=classes3
-              out.writestr(info,data)
+              zi=zipfile.ZipInfo(info.filename, info.date_time)
+              zi.compress_type=info.compress_type
+              zi.external_attr=info.external_attr
+              zi.create_system=info.create_system
+              out.writestr(zi,data)
           out.close(); old.close(); new.close()
           PY
           REPAIRED_SHA="$(sha256sum account-full251/baseline249.apk | awk '{print $1}')"
