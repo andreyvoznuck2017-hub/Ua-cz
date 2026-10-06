@@ -4,14 +4,14 @@
   "before": {
     "file": "Svoyi-Before-2.5.2-QA.apk",
     "package": "eu.svoyi.qa.before253",
-    "sha256": "b41625f0ebfb79b0fee13502f826c241af18ec985abb7244ebc76f993195c9b1",
+    "sha256": "5c9cdd54f0f263081688827df298eedb3134a1eb22f853a71caa9c373cf7791a",
     "bytes": 3692290,
     "verified": true
   },
   "after": {
     "file": "Svoyi-Social-Core-2.5.3-QA.apk",
     "package": "eu.svoyi.qa.finish253",
-    "sha256": "9bce9b308db43999c70a046e69208ce662cddf5cc4d043a3cae639f546504964",
+    "sha256": "158c31a834d34020fc9fb78a74b9c0020d1a589e77805d2644099c1803cb57c6",
     "bytes": 3696386,
     "verified": true
   },
