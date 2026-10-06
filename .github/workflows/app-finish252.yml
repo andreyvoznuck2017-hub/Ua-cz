@@ -24,42 +24,17 @@ jobs:
           java-version: '17'
       - uses: actions/download-artifact@v4
         with:
-          name: batch20-unsigned-1
-          run-id: 37354449484
+          name: finish252-apks-5
+          run-id: 37450779825
           github-token: ${{ github.token }}
-          path: baseline248
-      - name: Prepare valid 2.4.9 baseline
+          path: verified-baseline
+      - name: Prepare verified 2.4.9 baseline and Android tools
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y libsmali-java
-          curl --fail --proto '=https' --location --retry 3 --max-time 120 \
-            'https://test.jkunis.eu/android-home10-249-qa-db5f499b-r2/Svoyi-2.4.9-Home10-Code-and-QA.zip' \
-            -o /tmp/home249.zip
-          rm -rf /tmp/home249 && mkdir -p /tmp/home249
-          unzip -q /tmp/home249.zip -d /tmp/home249
-          MATCH="$(find /tmp/home249 -type f -name '*.apk' -print0 | xargs -0 sha256sum | awk '$1=="db5f499b94514c440f145d20026c2debe5b7d183e26fcbc8a4ce5558b4cbf2fa"{print $2; exit}')"
-          test -n "$MATCH"
-          echo 'c97c63fcbe3ef497ff46594ff055ad0050fa2660c9e11d7bfe9c9e05af604041  baseline248/Svoyi-2.4.8-unsigned.apk' | sha256sum --check
-          python3 - "$MATCH" <<'PY'
-          import sys,zipfile
-          old=zipfile.ZipFile('baseline248/Svoyi-2.4.8-unsigned.apk')
-          new=zipfile.ZipFile(sys.argv[1])
-          def zread(z,name):
-              info=z.getinfo(name)
-              with z.open(info) as fp:
-                  fp._expected_crc=None
-                  return fp.read()
-          manifest=zread(new,'AndroidManifest.xml');classes3=zread(new,'classes3.dex')
-          out=zipfile.ZipFile('app-finish252/baseline249.apk','w',zipfile.ZIP_DEFLATED)
-          for info in old.infolist():
-              data=old.read(info.filename)
-              if info.filename=='AndroidManifest.xml':data=manifest
-              elif info.filename=='classes3.dex':data=classes3
-              zi=zipfile.ZipInfo(info.filename,info.date_time);zi.compress_type=info.compress_type;zi.external_attr=info.external_attr;zi.create_system=info.create_system
-              out.writestr(zi,data)
-          out.close();old.close();new.close()
-          PY
+          echo 'fb8e989ee5dac4e89127b1e61beb94c59e7d0dc8b2774ad7fe84dd4fe989a8e1  verified-baseline/Svoyi-Before-2.4.9-QA.apk' | sha256sum --check
+          cp verified-baseline/Svoyi-Before-2.4.9-QA.apk app-finish252/baseline249.apk
           unzip -t app-finish252/baseline249.apk >/dev/null
       - name: Build baseline and final QA APK
         run: python3 app-finish252/build.py
