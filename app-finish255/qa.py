@@ -170,7 +170,8 @@ def pick_file(filename):
         tap("Show roots","content-desc") or tap("Показати кореневі папки","content-desc");time.sleep(1)
         tap("Downloads") or tap("Завантаження");time.sleep(2)
     must("picker-has-"+filename,wait(lambda:filename in blob(),15),blob()[:800])
-    must("select-"+filename,tap(filename));must("picker-return-"+filename,wait(lambda:"Надіслати" in blob(),20),blob()[:800])
+    # Tap the visible filename text, not the DocumentsUI preview accessibility node.
+    must("select-"+filename,tap(filename,"text"));must("picker-return-"+filename,wait(lambda:"Надіслати" in blob(),20),blob()[:800])
     must("staged-"+filename,wait(lambda:filename in blob(),15),blob()[:900])
 
 def attachment_url(message):
