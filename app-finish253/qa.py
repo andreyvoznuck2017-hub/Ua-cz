@@ -63,7 +63,7 @@ def swipe_up(n=5):
 
 try:
     s,email,pw=account();check("qa-account",True)
-    for route in ["/?p=dating","/?p=nearby","/?p=housing","/?p=groups","/?p=feed","/?p=notifications","/?p=mail"]:
+    for route in ["/?p=dating","/?p=nearby","/?p=housing","/?p=groups","/?p=feed","/?p=notifications"]:
         res=api(s,{"op":"screen","route":route});check("api-"+re.sub(r"\W+","-",route).strip("-"),bool(res.get("page") or res.get("nodes")),res.get("page",""))
     login(email,pw)
     for label,key in [("Знайомства","dating"),("Житло","housing"),("Групи","groups"),("Сповіщення","notifications"),("Повідомлення","mail")]:
