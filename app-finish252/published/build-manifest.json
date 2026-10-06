@@ -3,7 +3,7 @@
   "before": {
     "file": "Svoyi-Before-2.4.9-QA.apk",
     "package": "eu.svoyi.qa.before252",
-    "sha256": "753b7daf0b67e2237186bb20fa2a7edd264172a902ef69fc19ce442019a521bf",
+    "sha256": "5a997230674544241519e3705f876f89c8053d3733569b1acf5c3979f17025b0",
     "bytes": 3675906,
     "signature": [
       "Verifies",
@@ -17,7 +17,7 @@
   "final": {
     "file": "Svoyi-Final-2.5.2-QA.apk",
     "package": "eu.svoyi.qa.finish252",
-    "sha256": "75cd47b533c04802705cf7353c4990c7cebc6569e0af833af68d582c9a17e7f1",
+    "sha256": "3ba77212dd78df87338c77b4bdfb93c1471f3a11d30fa646fe88cdae4b30d5da",
     "bytes": 3692290,
     "signature": [
       "Verifies",
