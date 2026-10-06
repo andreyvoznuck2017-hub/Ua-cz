@@ -1,0 +1,15 @@
+{
+  "unsigned_sha256": "682899f88de76f9a07a8ba92ffd5e3e7a3116153f34a2bce2d02ce53d5a28640",
+  "version": "2.5.4-final-qa",
+  "versionCode": 354,
+  "features": [
+    "2.5.3 social visual pass",
+    "mail keyboard resize and composer visibility",
+    "per-account per-page scroll restore",
+    "dating touch targets",
+    "housing card sizing",
+    "comment action targets",
+    "notification row targets"
+  ],
+  "server_changed": false
+}

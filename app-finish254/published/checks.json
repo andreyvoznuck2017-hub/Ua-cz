@@ -1,0 +1,177 @@
+[
+  {
+    "test": "two-disposable-accounts",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "seed-mail",
+    "passed": true,
+    "detail": "{'ok': True, 'requestId': '0e970e03c3e30da6405c5aaa1575b732', 'message': {'id': 820, 'senderId': 161, 'recipientId': 160, 'sender_id': 161, 'recipient_id': 160, 'body': 'Seed QA254 a7953c', 'bodyHtml': 'Seed QA254 a7953c', 'priority': False, 'time': '2026-10-06 16:12:51', 'createdEpoch': 1791292371, 'serverNow': 1791292371, 'read': False, 'delivered': False, 'deliveredAt': None, 'readAt': None, 'attachmentId': 0, 'attachmentName': '', 'attachmentMime': '', 'attachmentSize': 0, 'attachment': None"
+  },
+  {
+    "test": "api-p-dating",
+    "passed": true,
+    "detail": "dating"
+  },
+  {
+    "test": "api-p-nearby",
+    "passed": true,
+    "detail": "nearby"
+  },
+  {
+    "test": "api-p-housing",
+    "passed": true,
+    "detail": "housing"
+  },
+  {
+    "test": "api-p-groups",
+    "passed": true,
+    "detail": "groups"
+  },
+  {
+    "test": "api-p-feed",
+    "passed": true,
+    "detail": "feed"
+  },
+  {
+    "test": "api-p-notifications",
+    "passed": true,
+    "detail": "notifications"
+  },
+  {
+    "test": "login-fields",
+    "passed": true,
+    "detail": "2"
+  },
+  {
+    "test": "login-submit",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-success",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nКабінет\nПошук\n\n\n\n\n\nВідкрити фото профілю\nФото користувача\n\nQA254 A\n● Онлайн зараз· 📍 Praha\n\nПереглянути профіль\nРедагувати\n\n✉  Email не підтверджено\n[REDACTED] · підтвердьте адресу, щоб не пропускати важливі сповіщення.\nНадіслати лист повторно\nОсобистий кабінет\nЗаповнення анкети: 20 відсотків. Заповніть основні дані та робочу анкету, щоб вас легше знаходили.\n\nТвоя анкета\n20%\n\nЗаповніть основні дані та робочу анкету, щоб вас легше знаходили.\n\nХто дивився. Відвідувачі та статистика анкети\n\n\nХто дивився\nВідвідувачі та статистика анкети\n\n\nДосягнення "
+  },
+  {
+    "test": "nav-dating",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "dating-alive",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "nav-housing",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "housing-scrollable-or-short-list",
+    "passed": true,
+    "detail": "short/non-scrollable list"
+  },
+  {
+    "test": "nav-notifications",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "notifications-alive",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "nav-groups",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "open-mail-top",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "peer-visible",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nПовідомлення\nПошук\n\n\n\n\nПовідомлення\nВаші діалоги\nНаписати людині\nФільтри діалогів\n\nЗнайти серед завантажених діалогів…\nОчистити пошук діалогів\n\nУсі · 1\nНепрочитані · 1\nЗнайдено: 1 · лише завантажені діалоги\n\n\n\nQA254 B, 1 непрочитаних, У мережі\nПрофіль: QA254 B\n\n\nQA254 B\n16:12\nSeed QA254 a7953c\n1\n\nГоловна\n\nГоловна\nПовідомлення. Непрочитаних: 1\n\nПовідомлення · 1\nСповіщення. Непрочитаних: 1\n\nСповіщення · 1\nПрофіль\n\nПрофіль"
+  },
+  {
+    "test": "open-peer",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "thread-open",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA254 B\nВідкрити профіль QA254 B\nQA254 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nСьогодні\nДії повідомлення 820\nВідкрити профіль співрозмовника\n\nSeed QA254 a7953c\n16:12 16:12\n\n0 / 3000\n\n\nСмайли\nЗробити фото\nГолосове повідомлення\nКругле відео\nФото та файли\nФорматування\nІнші інструменти\n\nФото, файли, голос, смайли та форматування\nПовідомлення… Поле нового повідомлення\nНадіслати повідомлення\n\nГоловна\n\nГоловна\nПовідомлення. Непрочитаних: 0\n\nПовідомлення\nСповіщення. Непрочитаних: 1\n\nСповіщення · 1\nПрофіль\n\nПрофіль"
+  },
+  {
+    "test": "seed-visible",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA254 B\nВідкрити профіль QA254 B\nQA254 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nСьогодні\nДії повідомлення 820\nВідкрити профіль співрозмовника\n\nSeed QA254 a7953c\n16:12 16:12\n\n0 / 3000\n\n\nСмайли\nЗробити фото\nГолосове повідомлення\nКругле відео\nФото та файли\nФорматування\nІнші інструменти\n\nФото, файли, голос, смайли та форматування\nПовідомлення… Поле нового повідомлення\nНадіслати повідомлення\n\nГоловна\n\nГоловна\nПовідомлення. Непрочитаних: 0\n\nПовідомлення\nСповіщення. Непрочитаних: 1\n\nСповіщення · 1\nПрофіль\n\nПрофіль"
+  },
+  {
+    "test": "composer-height",
+    "passed": true,
+    "detail": "[142, 1958, 912, 2100]"
+  },
+  {
+    "test": "composer-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "keyboard-open",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "send-reply",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "peer-received-reply",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "keyboard-retained-after-send",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "longpress-seed",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "action-sheet",
+    "passed": true,
+    "detail": "\n\n\n\n\n\n\n\n\nПовідомлення\nSeed QA254 a7953c\n\n\n❤️ Реакція ❤️\n😂 Реакція 😂\n👍 Реакція 👍\n😮 Реакція 😮\n😢 Реакція 😢\n😡 Реакція 😡\nВідповісти\n↩\nВідповісти\nКопіювати\n⧉\nКопіювати\nВиділити текст\nＴ\nВиділити текст\nСкасувати\n×\nСкасувати"
+  },
+  {
+    "test": "heart-action-visible",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "heart-persisted",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "session-after-restart",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nКабінет\nПошук\n\n\n\n\n\nВідкрити фото профілю\nФото користувача\n\nQA254 A\n● Онлайн зараз· 📍 Praha\n\nПереглянути профіль\nРедагувати\n\n✉  Email не підтверджено\n[REDACTED] · підтвердьте адресу, щоб не пропускати важливі сповіщення.\nНадіслати лист повторно\nОсобистий кабінет\nЗаповнення анкети: 20 відсотків. Заповніть основні дані та робочу анкету, щоб вас легше знаходили.\n\nТвоя анкета\n20%\n\nЗаповніть основні дані та робочу анкету, щоб вас легше знаходили.\n\nХто ди"
+  },
+  {
+    "test": "no-fatal",
+    "passed": true,
+    "detail": ""
+  }
+]

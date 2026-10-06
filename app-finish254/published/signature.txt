@@ -1,0 +1,18 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V3.0 Signer: certificate DN: CN=Svoyi Finish QA 2.5.4
+V3.0 Signer: certificate SHA-256 digest: 6819b763bcad1039e9a8008d396156a08953fa6133abec198a9f0b5878f363fa
+V3.0 Signer: certificate SHA-1 digest: 2a0713ea59e3c201c144d54a403861785fce9209
+V3.0 Signer: certificate MD5 digest: 788a5be57fedb5e354e5d74a2a5934c7
+V3.0 Signer: key algorithm: RSA
+V3.0 Signer: key size (bits): 3072
+V3.0 Signer: public key SHA-256 digest: 3835132325b51a3b0b9d6f3ea20c6b4547dcf85d538e4688ab7513c38f5648db
+V3.0 Signer: public key SHA-1 digest: 0d17aeece4a83cfe18e237ef07394cb83adbf2cf
+V3.0 Signer: public key MD5 digest: 7bf0e3a4c56d16fcd85097398b5e21cd
