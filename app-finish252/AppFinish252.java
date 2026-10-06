@@ -24,7 +24,7 @@ public final class AppFinish252 {
         if("home".equals(page)){
             try{home.put(a,new JSONObject(model.toString()));}catch(Exception e){home.put(a,model);}
         }
-        AccountScreen252.apply(a,model,AccountScreen252.SITE);
+        if("profile".equals(page))AccountScreen252.apply(a,model,AccountScreen252.SITE);
         if(POLISH.contains(page))polish(a,model);
     }
 
