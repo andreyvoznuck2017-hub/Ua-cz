@@ -197,7 +197,10 @@ def patch_dex(variant: int, build: Path) -> bytes:
     for p in helper_smali.rglob('*.smali'):
         rel = p.relative_to(helper_smali)
         dest = smali / rel
-        assert not dest.exists(), f"Unexpected helper collision: {rel}"
+        if dest.exists():
+            if dest.read_bytes() == p.read_bytes():
+                continue
+            raise AssertionError(f"Unexpected non-identical helper collision: {rel}")
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, dest)
         added.append(str(rel))
