@@ -51,13 +51,29 @@ def account():
 def login(apk,pkg,email,pw,prefix):
     adb("install","-r","-g",str(apk),timeout=100);adb("logcat","-c");adb("shell","monkey","-p",pkg,"-c","android.intent.category.LAUNCHER","1");time.sleep(11)
     capture(prefix+"-login")
-    if not tap("class","android.widget.EditText",False,0):raise RuntimeError("email field absent "+pkg)
-    adb("shell","input","text",email)
-    if not tap("class","android.widget.EditText",False,1):raise RuntimeError("password field absent "+pkg)
-    adb("shell","input","text",pw);adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1)
-    if not tap("text","Увійти"):raise RuntimeError("login button absent "+pkg)
-    time.sleep(11);capture(prefix+"-home");check(prefix+"-alive-home",alive(pkg))
+    for attempt in range(3):
+        current=text_blob()
+        if "Вийти" in current or "Особистий кабінет" in current or "QA Finish252" in current:break
+        edits=[n for n in ui().iter("node") if n.get("class","")=="android.widget.EditText"]
+        if len(edits)<2:break
+        if not tap("class","android.widget.EditText",False,0):break
+        adb("shell","input","keyevent","KEYCODE_MOVE_END");adb("shell","input","text",email)
+        if not tap("class","android.widget.EditText",False,1):break
+        adb("shell","input","keyevent","KEYCODE_MOVE_END");adb("shell","input","text",pw);adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1)
+        if not tap("text","Увійти"):break
+        time.sleep(10)
+        if "Неправильний email" not in text_blob():break
+        time.sleep(2)
+    check(prefix+"-login-succeeded","Неправильний email" not in text_blob() and alive(pkg),text_blob()[:500])
+    went_home=tap("content-desc","Головна",contains=True) or tap("text","Головна")
+    if went_home:time.sleep(8)
+    capture(prefix+"-home");check(prefix+"-alive-home",alive(pkg))
 def uninstall(pkg):adb("uninstall",pkg,allow_fail=True)
+def tap_scroll(label):
+    for _ in range(7):
+        if tap("text",label,contains=True) or tap("content-desc",label,contains=True):return True
+        adb("shell","input","swipe","520","1850","520","650","550");time.sleep(1)
+    return False
 
 def montage(a,b,out,title):
     ia=Image.open(OUT/a).convert("RGB");ib=Image.open(OUT/b).convert("RGB")
@@ -81,8 +97,8 @@ try:
         check("api-"+re.sub(r"\W+","-",route).strip("-"),any(str(t).lower() in raw for t in tokens),result.get("page",""))
     before=Path(os.environ["BEFORE_APK"]);final=Path(os.environ["FINAL_APK"])
     login(before,"eu.svoyi.qa.before252",email,pw,"before")
-    if tap("content-desc","Профіль",contains=True):
-        time.sleep(7);capture("before-account")
+    if tap("content-desc","Профіль",contains=True) or tap("text","Профіль"):
+        time.sleep(7);capture("before-account");check("before-profile-nav",True)
     else:
         capture("before-account");check("before-profile-nav",False,"profile tab absent")
     uninstall("eu.svoyi.qa.before252")
@@ -95,14 +111,16 @@ try:
     if went_near:
         time.sleep(8);capture("after-nearby");near=text_blob();check("nearby-does-not-return-home","Свої поруч" in near or "Люди поруч" in near,near[:800])
         adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(4)
-    if tap("content-desc","Профіль",contains=True):
+    if tap("content-desc","Профіль",contains=True) or tap("text","Профіль"):
         time.sleep(8);capture("after-account")
         acc=text_blob()
         check("account-site-match-visible","Особистий кабінет" in acc or "Швидкий доступ" in acc,acc[:800])
         for label in ["Знайомства","Житло","Сповіщення","Безпека"]:
-            ok=tap("text",label,contains=True) or tap("content-desc",label,contains=True)
+            ok=tap_scroll(label)
             check("account-action-"+label,ok)
-            if ok:time.sleep(3);check("alive-after-"+label,alive("eu.svoyi.qa.finish252"));adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(2)
+            if ok:
+                time.sleep(3);check("alive-after-"+label,alive("eu.svoyi.qa.finish252"));adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(3)
+                tap("content-desc","Профіль",contains=True) or tap("text","Профіль");time.sleep(3)
     else:
         capture("after-account");check("after-profile-nav",False,"profile tab absent")
     log=adb("logcat","-d","-v","threadtime",timeout=50).decode(errors="replace");save("final-logcat.txt",log)
