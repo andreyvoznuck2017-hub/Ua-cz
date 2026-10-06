@@ -109,10 +109,12 @@ try:
     login(final,"eu.svoyi.qa.finish252",email,pw,"after")
     home_text=text_blob()
     check("after-home-site-sections",any(x in home_text for x in ["Дописи","Вакансії","Житло","Свої поруч"]),home_text[:600])
-    scroll_top();went_near=tap_scroll("Показати людей")
+    scroll_top();went_near=tap_scroll("Люди поруч")
     check("nearby-link-clickable",went_near)
     if went_near:
-        time.sleep(8);capture("after-nearby");near=text_blob();check("nearby-does-not-return-home","Свої поруч" in near or "Люди поруч" in near,near[:800])
+        time.sleep(8);capture("after-nearby");near=text_blob()
+        check("nearby-does-not-return-home",any(x in near for x in ["Люди поруч","Знайомства","Поруч","км"]),near[:800])
+        check("alive-after-nearby",alive("eu.svoyi.qa.finish252"))
         adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(4)
     if tap("content-desc","Профіль",contains=True) or tap("text","Профіль"):
         time.sleep(8);capture("after-account")
@@ -127,8 +129,21 @@ try:
                 tap("content-desc","Профіль",contains=True) or tap("text","Профіль");time.sleep(3)
     else:
         capture("after-account");check("after-profile-nav",False,"profile tab absent")
+    # Session must survive a normal process restart.
+    adb("shell","am","force-stop","eu.svoyi.qa.finish252");time.sleep(2)
+    adb("shell","monkey","-p","eu.svoyi.qa.finish252","-c","android.intent.category.LAUNCHER","1");time.sleep(8)
+    persisted=text_blob()
+    check("session-persists-after-restart","Увійти" not in persisted and ("Головна" in persisted or "Кабінет" in persisted),persisted[:700])
+    check("alive-after-restart",alive("eu.svoyi.qa.finish252"))
+
+    # Loaded content should not crash if connectivity disappears briefly.
+    adb("shell","svc","wifi","disable",allow_fail=True);adb("shell","svc","data","disable",allow_fail=True);time.sleep(2)
+    check("alive-offline-after-load",alive("eu.svoyi.qa.finish252"))
+    adb("shell","svc","wifi","enable",allow_fail=True);adb("shell","svc","data","enable",allow_fail=True);time.sleep(2)
+
     log=adb("logcat","-d","-v","threadtime",timeout=50).decode(errors="replace");save("final-logcat.txt",log)
     check("no-final-fatal","FATAL EXCEPTION" not in log)
+    check("no-location-abstract-method-error","AbstractMethodError" not in log or "LocationListener" not in log)
     montage("before-home.png","after-home.png","before-after-home.png","Головна")
     montage("before-account.png","after-account.png","before-after-account.png","Особистий кабінет")
     check("before-after-created",True)
