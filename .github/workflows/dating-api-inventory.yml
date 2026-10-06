@@ -1,0 +1,44 @@
+name: Dating API inventory
+on:
+  workflow_dispatch:
+  push:
+    branches: [android-app-finish-253]
+    paths: ['.github/workflows/dating-api-inventory.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install requests beautifulsoup4
+      - name: Register disposable QA account and save dating projection
+        run: |
+          mkdir -p dating-api
+          python3 - <<'PY'
+          import json,secrets,requests,os
+          from bs4 import BeautifulSoup
+          O='https://test.jkunis.eu';s=requests.Session();tag=os.environ.get('GITHUB_RUN_ID',secrets.token_hex(4))
+          email=f'qa.dating.inventory.{tag}@example.com';pw='Qa'+secrets.token_hex(15)
+          r=s.get(O+'/?p=register',timeout=45);r.raise_for_status();csrf=BeautifulSoup(r.text,'html.parser').select_one('input[name=csrf]');assert csrf
+          r=s.post(O+'/?p=register',data={'csrf':csrf.get('value',''),'action':'register','start_goal':'all','name':'QA Dating Inventory','email':email,'city':'Praha','password':pw},timeout=45);r.raise_for_status()
+          def api(body):
+              x=s.post(O+'/native.php',json=body,timeout=45,headers={'User-Agent':'SvoyiNative/2.5.3 QA'});x.raise_for_status();return x.json()
+          st=api({'op':'session','route':'/?p=home'})['state'];assert st.get('signedIn')
+          data=api({'op':'screen','route':'/?p=dating&tab=discover'})
+          raw=json.dumps(data,ensure_ascii=False,indent=2).replace(email,'[REDACTED]')
+          open('dating-api/dating.json','w',encoding='utf8').write(raw)
+          items=data.get('items') or []
+          summary=[]
+          for x in items:
+              if isinstance(x,dict): summary.append({k:x.get(k) for k in ['id','userId','profileId','name','route','url','city'] if k in x})
+          open('dating-api/items.json','w',encoding='utf8').write(json.dumps(summary,ensure_ascii=False,indent=2))
+          print(json.dumps(summary[:10],ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dating-api-inventory-${{ github.run_number }}
+          path: dating-api/
+          retention-days: 2
+          if-no-files-found: error
