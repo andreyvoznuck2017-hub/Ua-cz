@@ -52,11 +52,21 @@ def login(email,pw):
             n=edits[idx];nums=list(map(int,re.findall(r"\d+",n.get("bounds",""))));x1,y1,x2,y2=nums;adb("shell","input","tap",str((x1+x2)//2),str((y1+y2)//2));adb("shell","input","text",val)
         adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(1);tap_text("Увійти");time.sleep(10)
     check("login", "Увійти" not in blob(), blob()[:500])
+def find_scroll(label,down=True,steps=14):
+    for _ in range(steps):
+        if tap_text(label):time.sleep(7);return True
+        if down:adb("shell","input","swipe","520","1800","520","650","420")
+        else:adb("shell","input","swipe","520","650","520","1800","420")
+        time.sleep(.45)
+    return False
 def nav(label):
-    if tap_text(label):time.sleep(7);return True
-    # menu fallback
-    if tap_text("Відкрити меню"):time.sleep(2)
-    if tap_text(label):time.sleep(7);return True
+    # First use actions already exposed by the cabinet/current screen.
+    if find_scroll(label,True,12):return True
+    for _ in range(8):adb("shell","input","swipe","520","650","520","1800","300")
+    # Then use the drawer and search the full drawer, not only its first viewport.
+    if tap_text("Відкрити меню"):
+        time.sleep(2)
+        if find_scroll(label,True,16):return True
     return False
 def swipe_up(n=5):
     for _ in range(n):adb("shell","input","swipe","520","1850","520","650","400");time.sleep(.5)
