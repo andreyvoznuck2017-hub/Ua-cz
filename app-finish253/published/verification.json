@@ -1,0 +1,51 @@
+{
+  "version": "2.5.3-social-core",
+  "baseline_sha256": "3ba77212dd78df87338c77b4bdfb93c1471f3a11d30fa646fe88cdae4b30d5da",
+  "before": {
+    "file": "Svoyi-Before-2.5.2-QA.apk",
+    "package": "eu.svoyi.qa.before253",
+    "sha256": "b41625f0ebfb79b0fee13502f826c241af18ec985abb7244ebc76f993195c9b1",
+    "bytes": 3692290,
+    "verified": true
+  },
+  "after": {
+    "file": "Svoyi-Social-Core-2.5.3-QA.apk",
+    "package": "eu.svoyi.qa.finish253",
+    "sha256": "9bce9b308db43999c70a046e69208ce662cddf5cc4d043a3cae639f546504964",
+    "bytes": 3696386,
+    "verified": true
+  },
+  "tasks": [
+    "dating and nearby touch targets",
+    "dating tab readability",
+    "dating large-photo crop",
+    "super-like confirmation semantics label",
+    "housing tabs",
+    "housing photo crop",
+    "housing action targets",
+    "group tabs",
+    "group comment action targets",
+    "feed comment action targets",
+    "mail IME resize",
+    "mail composer multi-line visibility",
+    "mail composer 50dp minimum",
+    "hide bottom navigation while typing",
+    "hide mail toolbar while typing",
+    "restore navigation after typing",
+    "notification row targets",
+    "notification tabs",
+    "horizontal strip cleanup",
+    "button capitalization cleanup",
+    "edit field sizing",
+    "large media scaling",
+    "legacy people route normalization",
+    "dating legacy-view normalization",
+    "housing favorites route normalization",
+    "groups mine route normalization",
+    "preserve all original click handlers",
+    "preserve server permissions and transport",
+    "no server/database change"
+  ],
+  "owner_key_used": false,
+  "server_changed": false
+}

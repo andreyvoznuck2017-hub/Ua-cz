@@ -1,0 +1,2 @@
+b41625f0ebfb79b0fee13502f826c241af18ec985abb7244ebc76f993195c9b1  Svoyi-Before-2.5.2-QA.apk
+9bce9b308db43999c70a046e69208ce662cddf5cc4d043a3cae639f546504964  Svoyi-Social-Core-2.5.3-QA.apk
