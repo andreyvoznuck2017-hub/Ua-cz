@@ -100,7 +100,7 @@ activity=W/"smali/eu/svoyi/nativeapp/MainActivity.smali"
 source=activity.read_text()
 for signature in (r"load\(Ljava/lang/String;ZI\)V",r"settings\(\)V"):
     pat=r"(?m)(^\.method private "+signature+r"\n    \.(?:locals|registers) \d+\n)"
-    source,count=re.subn(pat,lambda m:m[1]+"\n    invoke-direct {p0}, Leu/svoyi/nativeapp/MainActivity;->saveChatDraft()V\n",source)
+    source,count=re.subn(pat,lambda m:m[1]+"\n    invoke-direct/range {p0 .. p0}, Leu/svoyi/nativeapp/MainActivity;->saveChatDraft()V\n",source)
     assert count==1, ("draft flush patch count",signature,count)
 activity.write_text(source)
 
