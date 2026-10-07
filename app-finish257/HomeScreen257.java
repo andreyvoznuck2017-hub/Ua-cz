@@ -272,7 +272,7 @@ public final class HomeScreen257 {
     private View preview(JSONObject n){
         boolean avatar=n.optBoolean("avatar");String image=n.optString("image",n.optString("src",""));
         String title=n.optString("title",n.optString("text",""));JSONArray lines=array(n,"lines");
-        if("cover".equals(n.optString("layout"))&&!image.isEmpty()){
+        if("cover".equals(n.optString("layout"))&&!image.isEmpty()&&n.optString("route").contains("p=challenges")){
             FrameLayout frame=new FrameLayout(activity);frame.setBackground(round(bg,12,border));frame.setClipToOutline(true);View photo=host.image(image);if(photo instanceof ImageView)((ImageView)photo).setScaleType(ImageView.ScaleType.CENTER_CROP);if(photo!=null)frame.addView(photo,new FrameLayout.LayoutParams(-1,dp(200)));frame.setContentDescription(title);frame.setFocusable(true);frame.setOnClickListener(v->{if(host.alive())host.navigate(AppFinish252.route(n.optString("route")));});return frame;
         }
         LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(6),dp(7),dp(6),dp(7));row.setMinimumHeight(dp(48));
