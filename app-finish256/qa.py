@@ -283,6 +283,13 @@ try:
     open_thread(b)
     must("draft-keeps-last-character-on-navigation",wait(lambda:current_input()=="Draft256X",15),current_input())
     shot("draft-after-navigation")
+    c=composer_node();tap_node(c);time.sleep(.5)
+    adb("shell","input text Y; am start -n "+PKG+"/eu.svoyi.nativeapp.MainActivity -a android.intent.action.VIEW -d https://test.jkunis.eu/?native=settings --activity-single-top")
+    must("settings-open",wait(lambda:"Налаштування" in blob(),15))
+    hide_keyboard();adb("shell","input","keyevent","KEYCODE_BACK")
+    must("return-from-settings",wait(lambda:"Надіслати" in blob(),20))
+    must("draft-keeps-last-character-on-settings",wait(lambda:current_input()=="Draft256XY",10),current_input())
+
 
     # Open the actual native sections and inspect matching server models.
     routes=[("home","Головна"),("profile","Кабінет"),("groups","Групи"),

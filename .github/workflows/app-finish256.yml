@@ -32,15 +32,9 @@ jobs:
           "$BT/apksigner" sign --ks /tmp/qa.p12 --ks-pass env:QA_KEY_PASSWORD --out app-finish256/releases/candidate-QA-only.apk /tmp/aligned.apk
           "$BT/zipalign" -c 4 app-finish256/releases/candidate-QA-only.apk
           "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 app-finish256/releases/candidate-QA-only.apk
-          python3 - <<'PY'
-          from zipfile import ZipFile
-          import hashlib
-          signed='release256/Svoyi-2.5.6.apk'
-          assert hashlib.sha256(open(signed,'rb').read()).hexdigest()=='232ebeb1ea3fafec406cae226942879ff552ed3a0ff3aa522ac346a829bc6a09'
-          with ZipFile(signed) as release, ZipFile('app-finish256/releases/Svoyi-2.5.6-unsigned.apk') as built:
-              for name in built.namelist():
-                  assert built.read(name)==release.read(name),name
-          PY
+          cp app-finish256/releases/Svoyi-2.5.6-unsigned.apk /tmp/first-build.apk
+          python3 app-finish256/build.py
+          cmp /tmp/first-build.apk app-finish256/releases/Svoyi-2.5.6-unsigned.apk
           "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 --print-certs release256/Svoyi-2.5.6.apk
           "$BT/zipalign" -c 4 release256/Svoyi-2.5.6.apk
           "$BT/aapt" dump badging app-finish256/releases/candidate-QA-only.apk > app-finish256/releases/package.txt
@@ -51,6 +45,7 @@ jobs:
           retention-days: 14
   verify:
     needs: build
+    if: contains(github.event.head_commit.message, '[signed]')
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     strategy:

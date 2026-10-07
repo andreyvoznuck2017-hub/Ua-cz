@@ -71,7 +71,7 @@ def rewrite_manifest(data):
 
 for d in ["classes","dex","helper","smali"]:(W/d).mkdir()
 run("javac","-source","8","-target","8","-cp",android,"-d",W/"classes",SRC)
-classes=list((W/"classes").rglob("*.class"));assert classes
+classes=sorted((W/"classes").rglob("*.class"));assert classes
 run(bt/"d8","--min-api","26","--lib",android,"--output",W/"dex",*classes)
 run("baksmali","disassemble",W/"dex/classes.dex","-o",W/"helper")
 
@@ -98,9 +98,10 @@ owner.write_text(source)
 # after generation changes, so its close()/saveDraft() cannot flush recent typing.
 activity=W/"smali/eu/svoyi/nativeapp/MainActivity.smali"
 source=activity.read_text()
-pat=r"(?m)(^\.method private load\(Ljava/lang/String;ZI\)V\n    \.(?:locals|registers) \d+\n)"
-source,count=re.subn(pat,lambda m:m[1]+"\n    invoke-direct {p0}, Leu/svoyi/nativeapp/MainActivity;->saveChatDraft()V\n",source)
-assert count==1, ("draft flush patch count",count)
+for signature in (r"load\(Ljava/lang/String;ZI\)V",r"settings\(\)V"):
+    pat=r"(?m)(^\.method private "+signature+r"\n    \.(?:locals|registers) \d+\n)"
+    source,count=re.subn(pat,lambda m:m[1]+"\n    invoke-direct {p0}, Leu/svoyi/nativeapp/MainActivity;->saveChatDraft()V\n",source)
+    assert count==1, ("draft flush patch count",signature,count)
 activity.write_text(source)
 
 # These superseded classes contain API-29-only calls and are no longer reachable.
@@ -116,7 +117,7 @@ for p in (W/"helper").rglob("*.smali"):
         raise RuntimeError("collision "+str(rel))
     dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dst);added.append(str(rel))
 assert any("UiFinish256" in x for x in added)
-run("smali","assemble",W/"smali","-o",W/"classes3.dex")
+run("smali","assemble","--jobs","1",W/"smali","-o",W/"classes3.dex")
 
 def package_dex(data):
     old=b"eu.svoyi.qa.finish252";new=b"eu.svoyi.qa.finish255"
@@ -149,7 +150,7 @@ result={
         "native focus and keyboard listeners preserved",
         "native account/route scroll restoration preserved",
         "native dating photos and avatars retain their own dimensions",
-        "mail draft flushed before navigation invalidates screen generation",
+        "mail draft flushed before navigation or settings invalidates screen generation",
         "API 26 compatible UI code; no unguarded EditText.isSingleLine()"
     ],
     "server_changed":False,"owner_signing_key_used":False
