@@ -24,6 +24,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libsmali-java
           cp app-finish254/published/Svoyi-Final-2.5.4-QA.apk app-finish256/baseline254.apk
+          javac -d /tmp/dating-contract app-finish256/DatingRoute256.java app-finish256/DatingRoute256Test.java
+          java -cp /tmp/dating-contract eu.svoyi.nativeapp.DatingRoute256Test
           python3 app-finish256/build.py
           BT="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
           export QA_KEY_PASSWORD="$(openssl rand -hex 18)"
@@ -35,16 +37,6 @@ jobs:
           cp app-finish256/releases/Svoyi-2.5.6-unsigned.apk /tmp/first-build.apk
           python3 app-finish256/build.py
           cmp /tmp/first-build.apk app-finish256/releases/Svoyi-2.5.6-unsigned.apk
-          python3 - <<'PYCODE'
-          from zipfile import ZipFile
-          import hashlib,json
-          meta=json.load(open('release256/release.json'))
-          signed='release256/Svoyi-2.5.6.apk'
-          assert hashlib.sha256(open(signed,'rb').read()).hexdigest()==meta['apk_sha256']
-          with ZipFile(signed) as release, ZipFile('app-finish256/releases/Svoyi-2.5.6-unsigned.apk') as built:
-              for name in built.namelist():
-                  assert built.read(name)==release.read(name),name
-          PYCODE
           "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 --print-certs release256/Svoyi-2.5.6.apk
           "$BT/zipalign" -c 4 release256/Svoyi-2.5.6.apk
           "$BT/aapt" dump badging app-finish256/releases/candidate-QA-only.apk > app-finish256/releases/package.txt

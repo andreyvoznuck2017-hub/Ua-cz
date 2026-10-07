@@ -4,6 +4,7 @@ from pathlib import Path
 
 BASE=Path("app-finish256/baseline254.apk")
 SRC=Path("app-finish256/UiFinish256.java")
+ROUTE=Path("app-finish256/DatingRoute256.java")
 OUT=Path("app-finish256/releases");W=Path("app-finish256/.build")
 OUT.mkdir(parents=True,exist_ok=True)
 if W.exists():shutil.rmtree(W)
@@ -70,7 +71,7 @@ def rewrite_manifest(data):
     return struct.pack("<HHI",3,8,8+len(payload))+payload
 
 for d in ["classes","dex","helper","smali"]:(W/d).mkdir()
-run("javac","-source","8","-target","8","-cp",android,"-d",W/"classes",SRC)
+run("javac","-source","8","-target","8","-cp",android,"-d",W/"classes",SRC,ROUTE)
 classes=sorted((W/"classes").rglob("*.class"));assert classes
 run(bt/"d8","--min-api","26","--lib",android,"--output",W/"dex",*classes)
 run("baksmali","disassemble",W/"dex/classes.dex","-o",W/"helper")
@@ -103,6 +104,17 @@ for signature in (r"load\(Ljava/lang/String;ZI\)V",r"settings\(\)V"):
     source,count=re.subn(pat,lambda m:m[1]+"\n    invoke-direct/range {p0 .. p0}, Leu/svoyi/nativeapp/MainActivity;->saveChatDraft()V\n",source)
     assert count==1, ("draft flush patch count",signature,count)
 activity.write_text(source)
+
+policy=W/"smali/eu/svoyi/nativeapp/DatingScreenPolicy.smali"
+source=policy.read_text()
+for signature,body in [
+    ("profileRoute(ILjava/lang/String;Ljava/lang/String;)Z", "    .registers 3\n    invoke-static {p0, p1, p2}, Leu/svoyi/nativeapp/DatingRoute256;->profileRoute(ILjava/lang/String;Ljava/lang/String;)Z\n    move-result p0\n    return p0"),
+    ("returnRoute(Ljava/lang/String;)Ljava/lang/String;", "    .registers 1\n    invoke-static {p0}, Leu/svoyi/nativeapp/DatingRoute256;->returnRoute(Ljava/lang/String;)Ljava/lang/String;\n    move-result-object p0\n    return-object p0")
+]:
+    pat=r"(?ms)^\.method[^\n]* "+re.escape(signature)+r"\n.*?^\.end method"
+    source,count=re.subn(pat,lambda m: ".method static "+signature+"\n"+body+"\n.end method",source)
+    assert count==1,signature
+policy.write_text(source)
 
 # These superseded classes contain API-29-only calls and are no longer reachable.
 for pattern in ("SocialFinish253*.smali","InteractionFinish254*.smali","MediaCreateFinish255*.smali"):
@@ -150,6 +162,7 @@ result={
         "native focus and keyboard listeners preserved",
         "native account/route scroll restoration preserved",
         "native dating photos and avatars retain their own dimensions",
+        "current dating profile back links validate safely and preserve filters",
         "mail draft flushed before navigation or settings invalidates screen generation",
         "API 26 compatible UI code; no unguarded EditText.isSingleLine()"
     ],
