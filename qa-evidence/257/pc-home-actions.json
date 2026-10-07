@@ -1,0 +1,18 @@
+[
+  {
+    "test": "open-group",
+    "passed": true
+  },
+  {
+    "test": "open-post-comments",
+    "passed": true
+  },
+  {
+    "test": "open-job",
+    "passed": true
+  },
+  {
+    "test": "open-market",
+    "passed": true
+  }
+]

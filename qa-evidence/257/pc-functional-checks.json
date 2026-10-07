@@ -1,0 +1,50 @@
+[
+  {
+    "name": "login-csrf-found",
+    "passed": true
+  },
+  {
+    "name": "native-send-on-server",
+    "passed": true
+  },
+  {
+    "name": "message-actions-visible",
+    "passed": true
+  },
+  {
+    "name": "native-edit-on-server",
+    "passed": true
+  },
+  {
+    "name": "message-actions-visible",
+    "passed": true
+  },
+  {
+    "name": "quote-preview",
+    "passed": true
+  },
+  {
+    "name": "native-quote-on-server",
+    "passed": true
+  },
+  {
+    "name": "draft-after-navigation",
+    "passed": true
+  },
+  {
+    "name": "draft-after-restart",
+    "passed": true
+  },
+  {
+    "name": "inbox-conversation",
+    "passed": true
+  },
+  {
+    "name": "search-empty-state",
+    "passed": true
+  },
+  {
+    "name": "search-clear-restores-list",
+    "passed": true
+  }
+]
