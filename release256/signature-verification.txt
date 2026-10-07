@@ -1,0 +1,23 @@
+Process started with PID 16180 (shell: powershell)
+Initial output:
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Svoyi Final 2.5.5, OU=QA, O=Svoyi Europe, C=CZ
+Signer #1 certificate SHA-256 digest: 8a5a3738f9ff2007825abbe6574afb0bf3a3a9ea33ed4b74e7a6b78332c0012b
+Signer #1 certificate SHA-1 digest: b81c3818759a0f099e867b284ef7bef2544aa17d
+Signer #1 certificate MD5 digest: e90cde695c8b4fcfb28ec20d3be3e946
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: 2a0649e4698a40f4e4261a191b7f534aa7616fc6947f09b12178d46fa608adcc
+Signer #1 public key SHA-1 digest: 0bd1a027fb596bac0c2c9adbb4dece5ab36061da
+Signer #1 public key MD5 digest: cb7ba0b62eb638deff0df391086ee06e
+D17555AE03894A5AEC41CDC097F76419574685FD1D5F2914E9F41913E63FFA7E
+
+
+[executed on device: MSI (6b59d763-4cab-45c5-9dcd-a75972bac43c)]

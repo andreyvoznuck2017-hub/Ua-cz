@@ -1,0 +1,20 @@
+{
+  "version": "2.5.6",
+  "versionCode": 356,
+  "baseline_sha256": "7bd53cd66aad5aae50930119d61557067aa9de49f73f69f71181666e42dfe345",
+  "unsigned_sha256": "ff43fde75aaabc61bf943f36ddcf530b9ef93e30f51f5848911c6682d26f47ee",
+  "package": "eu.svoyi.qa.finish255",
+  "features": [
+    "single lifecycle-guarded UI pass replaces four conflicting passes",
+    "native focus and keyboard listeners preserved",
+    "native account/route scroll restoration preserved",
+    "native dating photos and avatars retain their own dimensions",
+    "mail draft flushed before navigation or settings invalidates screen generation",
+    "API 26 compatible UI code; no unguarded EditText.isSingleLine()"
+  ],
+  "server_changed": false,
+  "owner_signing_key_used": true,
+  "apk_sha256": "d17555ae03894a5aec41cdc097f76419574685fd1d5f2914e9f41913e63ffa7e",
+  "certificate_sha256": "8a5a3738f9ff2007825abbe6574afb0bf3a3a9ea33ed4b74e7a6b78332c0012b",
+  "source_commit": "c58130d3320698707cabe39bb98c91d96c0f5326"
+}
