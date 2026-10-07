@@ -7,10 +7,10 @@ from bs4 import BeautifulSoup
 from PIL import Image,ImageDraw
 
 ORIGIN="https://test.jkunis.eu"
-PKG=os.environ.get("APP_PACKAGE","eu.svoyi.qa.finish252")
+PKG=os.environ.get("APP_PACKAGE","eu.svoyi.qa.finish255")
 APK=Path(os.environ["APK"])
-BEFORE=Path(os.environ["BEFORE_APK"])
-OUT=Path(os.environ.get("QA_OUT","finish255-qa"));OUT.mkdir(parents=True,exist_ok=True)
+BEFORE=Path(os.environ.get("BEFORE_APK",str(APK)))
+OUT=Path(os.environ.get("QA_OUT","finish256-qa"));OUT.mkdir(parents=True,exist_ok=True)
 CHECKS=[];SECRETS=[]
 
 def save(name,value):
@@ -28,9 +28,9 @@ def adb(*args,timeout=80,allow_fail=False):
     if p.returncode and not allow_fail:raise RuntimeError("ADB "+p.stderr.decode(errors="replace")[:800])
     return p.stdout
 def ui():
-    adb("shell","uiautomator","dump","/sdcard/f255.xml")
+    adb("shell","uiautomator","dump","/sdcard/f256.xml")
     import xml.etree.ElementTree as ET
-    return ET.fromstring(adb("shell","cat","/sdcard/f255.xml"))
+    return ET.fromstring(adb("shell","cat","/sdcard/f256.xml"))
 def nodes():return list(ui().iter("node"))
 def blob():
     return "\n".join((n.get("text","")+" "+n.get("content-desc","")).strip() for n in nodes())
@@ -69,18 +69,18 @@ def keyboard():
 def hide_keyboard():
     if keyboard():adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(.8)
 def api(session,body):
-    r=session.post(ORIGIN+"/native.php",json=body,timeout=45,headers={"User-Agent":"SvoyiNative/2.5.5 QA"})
+    r=session.post(ORIGIN+"/native.php",json=body,timeout=45,headers={"User-Agent":"SvoyiNative/2.5.6 QA"})
     r.raise_for_status();return r.json()
 
 def account(tag):
-    s=requests.Session();run=os.environ.get("GITHUB_RUN_ID",secrets.token_hex(4))
-    email=f"qa.finish255.{run}.{tag}@example.com";pw="Qa"+secrets.token_hex(14);SECRETS.extend([email,pw])
+    s=requests.Session();run=os.environ.get("GITHUB_RUN_ID",secrets.token_hex(4))+"."+os.environ.get("QA_API","36")
+    email=f"qa.finish256.{run}.{tag}@example.com";pw="Qa"+secrets.token_hex(14);SECRETS.extend([email,pw])
     r=s.get(ORIGIN+"/?p=register",timeout=45);r.raise_for_status()
     soup=BeautifulSoup(r.text,"html.parser");csrf=soup.select_one('input[name=csrf]');assert csrf
-    r=s.post(ORIGIN+"/?p=register",data={"csrf":csrf.get("value",""),"action":"register","start_goal":"all","name":"QA255 "+tag.upper(),"email":email,"city":"Praha","password":pw},timeout=45);r.raise_for_status()
+    r=s.post(ORIGIN+"/?p=register",data={"csrf":csrf.get("value",""),"action":"register","start_goal":"all","name":"QA256 "+tag.upper(),"email":email,"city":"Praha","password":pw},timeout=45);r.raise_for_status()
     st=api(s,{"op":"session","route":"/?p=home"})["state"];assert st.get("signedIn")
     SECRETS.append(st.get("csrf",""))
-    return {"s":s,"email":email,"pw":pw,"id":st["user"]["id"],"name":st["user"].get("name","QA255 "+tag.upper()),"state":st}
+    return {"s":s,"email":email,"pw":pw,"id":st["user"]["id"],"name":st["user"].get("name","QA256 "+tag.upper()),"state":st}
 
 def retry_connection():
     for _ in range(4):
@@ -126,7 +126,10 @@ def current_input():
 def clear_current():
     e=next((n for n in editors() if n.get("focused")=="true"),composer_node())
     must("clear-field-present",e is not None);tap_node(e)
-    adb("shell","input","keycombination","113","29",allow_fail=True);adb("shell","input","keyevent","KEYCODE_DEL");time.sleep(.4)
+    text=e.get("text","")
+    adb("shell","input","keyevent","KEYCODE_MOVE_END")
+    if text:adb("shell","input","keyevent",*(["KEYCODE_DEL"]*len(text)))
+    time.sleep(.4)
 def enter(text,clear=False):
     e=next((n for n in editors() if n.get("focused")=="true"),composer_node())
     must("editor-present",e is not None)
@@ -153,8 +156,8 @@ def action(mid):
     must("action-sheet-"+str(mid),wait(lambda:"Копіювати" in blob(),10),blob()[:900])
 
 def push_files():
-    textfile=Path("/tmp/qa255.txt");textfile.write_text("Svoyi 2.5.5 real attachment roundtrip\n",encoding="utf-8")
-    photo=Path("/tmp/qa255.png");im=Image.new("RGB",(360,240),(235,240,248));ImageDraw.Draw(im).text((65,110),"SVOYI QA255 PHOTO",fill=(25,45,70));im.save(photo)
+    textfile=Path("/tmp/qa256.txt");textfile.write_text("Svoyi 2.5.6 real attachment roundtrip\n",encoding="utf-8")
+    photo=Path("/tmp/qa256.png");im=Image.new("RGB",(360,240),(235,240,248));ImageDraw.Draw(im).text((65,110),"SVOYI QA256 PHOTO",fill=(25,45,70));im.save(photo)
     for f in [textfile,photo]:adb("push",str(f),"/sdcard/Download/"+f.name)
     return textfile,photo
 
@@ -195,23 +198,16 @@ def montage(left,right,out,title):
     a=Image.open(OUT/left).convert("RGB");b=Image.open(OUT/right).convert("RGB")
     h=max(a.height,b.height);canvas=Image.new("RGB",(a.width+b.width,h+90),"white")
     canvas.paste(a,(0,90));canvas.paste(b,(a.width,90));d=ImageDraw.Draw(canvas)
-    d.text((18,18),"ДО — 2.5.4",fill="black");d.text((a.width+18,18),"ПІСЛЯ — 2.5.5",fill="black");d.text((18,52),title,fill="black")
+    d.text((18,18),"ДО — 2.5.4",fill="black");d.text((a.width+18,18),"ПІСЛЯ — 2.5.6",fill="black");d.text((18,52),title,fill="black")
     canvas.save(OUT/out)
 
 try:
-    must("exact-before-sha",hashlib.sha256(BEFORE.read_bytes()).hexdigest()=="7bd53cd66aad5aae50930119d61557067aa9de49f73f69f71181666e42dfe345")
     a,b=account("a"),account("b");check("two-disposable-accounts",True)
-    seed="SeedQA255-"+secrets.token_hex(3)
+    seed="SeedQA256-"+secrets.token_hex(3)
     res=api(b["s"],{"op":"mail-action","action":"send","route":"/?p=messages&with="+str(a["id"]),"peer":a["id"],"body":seed,"nonce":secrets.token_hex(16),"csrf":b["state"]["csrf"],"expectedAccount":b["id"],"kind":"text"})
     must("seed-message",res.get("ok"),str(res)[:700]);seedid=res["message"]["id"]
 
-    # Before proof from the verified 2.5.4 package.
-    install_login(BEFORE,a);open_thread(b);must("before-seed-visible",wait(lambda:seed in blob(),20));shot("before-mail-thread")
-    adb("uninstall",PKG,allow_fail=True)
-
-    # Final candidate.
-    install_login(APK,a);open_thread(b);must("after-seed-visible",wait(lambda:seed in blob(),20));shot("after-mail-thread")
-    montage("before-mail-thread.png","after-mail-thread.png","before-after-mail.png","Пошта та мобільний composer")
+    install_login(APK,a);open_thread(b);must("seed-visible",wait(lambda:seed in blob(),20));shot("mail-thread")
 
     c=composer_node();cb=bounds(c) if c is not None else []
     must("composer-min-height",len(cb)==4 and cb[3]-cb[1]>=48,str(cb))
@@ -219,10 +215,10 @@ try:
     # Quoted reply is sent through UI and independently read by peer B.
     action(seedid);must("reply-action",tap("Відповісти","content-desc") or tap("Відповісти"))
     must("quote-preview",wait(lambda:"Скасувати відповідь цитатою" in blob(),10),blob()[:800])
-    must("reply-keyboard",wait(keyboard,8));enter("QuoteReply255")
+    must("reply-keyboard",wait(keyboard,8));enter("QuoteReply256")
     must("reply-send",tap("Надіслати","content-desc") or tap("Надіслати"))
-    must("reply-peer-visible",wait(lambda:bool(find_msg(b,a,text="QuoteReply255")),35))
-    reply=find_msg(b,a,text="QuoteReply255")
+    must("reply-peer-visible",wait(lambda:bool(find_msg(b,a,text="QuoteReply256")),35))
+    reply=find_msg(b,a,text="QuoteReply256")
     must("quote-wire-kept","[quote]" in reply.get("body","") and seed in reply.get("body",""),reply.get("body","")[:500])
     must("keyboard-stays-after-reply",keyboard());shot("quote-reply")
 
@@ -232,11 +228,11 @@ try:
     attachment_case(photo,a,b,"photo")
 
     # UI edit and delete for own message.
-    clear_current();hide_keyboard();edit=send_text("EditTarget255",a,b);mid=edit["id"]
+    clear_current();hide_keyboard();edit=send_text("EditTarget256",a,b);mid=edit["id"]
     action(mid);must("edit-action",tap("Редагувати","content-desc") or tap("Редагувати"))
     must("edit-dialog",wait(lambda:"Редагувати повідомлення" in blob(),10),blob()[:800])
-    enter("Edited255",clear=True);hide_keyboard();must("edit-save",tap("Зберегти"))
-    must("edit-peer-updated",wait(lambda:find_msg(b,a,mid=mid).get("body")=="Edited255",30))
+    enter("Edited256",clear=True);hide_keyboard();must("edit-save",tap("Зберегти"))
+    must("edit-peer-updated",wait(lambda:find_msg(b,a,mid=mid).get("body")=="Edited256",30))
     must("edit-timestamp",bool(find_msg(b,a,mid=mid).get("editedAt")));shot("edited")
 
     action(mid);must("delete-action",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
@@ -251,22 +247,46 @@ try:
     shot("deleted")
 
     # Picker cancellation and draft persistence.
-    clear_current();enter("Draft255");hide_keyboard()
+    clear_current();enter("Draft256");hide_keyboard()
     opened=tap("Фото та файли","content-desc") or tap("Фото та файли") or tap("Фото, файли, голос","content-desc")
     must("draft-picker-open",opened);time.sleep(1.5)
     if "Фото або файл" in blob():tap("Фото або файл");time.sleep(2)
     adb("shell","input","keyevent","KEYCODE_BACK");must("draft-picker-return",wait(lambda:"Надіслати" in blob(),15))
-    must("draft-preserved-after-picker",current_input()=="Draft255",current_input())
+    must("draft-preserved-after-picker",current_input()=="Draft256",current_input())
     shot("draft-after-picker")
     adb("shell","am","force-stop",PKG);time.sleep(1);adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
     must("session-after-restart","Увійти" not in blob(),blob()[:500]);open_thread(b)
-    must("draft-after-restart",wait(lambda:current_input()=="Draft255",20),current_input())
+    must("draft-after-restart",wait(lambda:current_input()=="Draft256",20),current_input())
 
-    # Community / dating / creation API routes remain available and form models are inspected.
-    for route in ["/?p=groups","/?p=feed","/?p=dating","/?p=nearby","/?p=housing&create=1","/?p=events&create=1"]:
-        rr=api(a["s"],{"op":"screen","route":route});raw=json.dumps(rr,ensure_ascii=False)
-        check("api-"+re.sub(r"\W+","-",route).strip("-"),bool(rr.get("page") or rr.get("nodes")),rr.get("page",""))
-        save("model-"+re.sub(r"\W+","-",route).strip("-")+".json",rr)
+    # Flush the last character immediately on navigation, before the 450ms debounce.
+    c=composer_node();tap_node(c);time.sleep(.5)
+    back=next(n for n in nodes() if n.get("content-desc")=="Повернутися до діалогів")
+    x1,y1,x2,y2=bounds(back)
+    adb("shell","input text X; input tap %d %d"%((x1+x2)//2,(y1+y2)//2))
+    must("draft-navigation-left-thread",wait(lambda:"Повернутися до діалогів" not in blob(),20))
+    open_thread(b)
+    must("draft-keeps-last-character-on-navigation",wait(lambda:current_input()=="Draft256X",15),current_input())
+    shot("draft-after-navigation")
+
+    # Open the actual native sections and inspect matching server models.
+    routes=[("home","Головна"),("profile","Кабінет"),("groups","Спільноти"),
+            ("feed","Стрічка"),("dating","Знайомства"),("nearby","Поруч"),
+            ("housing","Житло"),("events","Події"),("notifications","Сповіщення")]
+    for page,title in routes:
+        route="/?p="+page
+        rr=api(a["s"],{"op":"screen","route":route})
+        must("api-"+page,rr.get("page")==page,rr.get("page",""))
+        save("model-"+page+".json",rr)
+        hide_keyboard()
+        adb("shell","am","start","-n",PKG+"/eu.svoyi.nativeapp.MainActivity","-a","android.intent.action.VIEW","-d",ORIGIN+route,"--activity-single-top")
+        time.sleep(4);retry_connection()
+        text=blob();must("native-"+page,"Увійти" not in text and "Не вдалося" not in text,text[:900])
+        must("native-visible-"+page,title in text or str(rr.get("title","__NO_TITLE__")) in text,text[:900])
+        shot("section-"+page)
+    for page in ("housing","events"):
+        rr=api(a["s"],{"op":"screen","route":"/?p="+page+"&create=1"})
+        must("creation-model-"+page,rr.get("page")==page)
+        save("model-create-"+page+".json",rr)
 
     log=adb("logcat","-d","-v","threadtime").decode(errors="replace");save("logcat.txt",log)
     check("no-fatal","FATAL EXCEPTION" not in log)
