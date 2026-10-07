@@ -1,0 +1,407 @@
+[
+  {
+    "test": "seed-incoming",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-fields",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-field-email",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-field-password",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-success",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "thread-open",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "update-256-to-257",
+    "passed": true,
+    "detail": "Performing Streamed Install\nSuccess\n"
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "version-257",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "session-retained",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "draft-retained",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "clear-field-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "incoming-rendered",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "send-QA257 outgoing verified",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "peer-received-QA257 outgoing verified",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "longpress-886",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "action-sheet-886",
+    "passed": true,
+    "detail": "\n\n\n\n\n\n\n\n\nПовідомлення\nQA257-incoming-a205f8\n\n\n❤️ Реакція ❤️\n😂 Реакція 😂\n👍 Реакція 👍\n😮 Реакція 😮\n😢 Реакція 😢\n😡 Реакція 😡\nВідповісти\n↩\nВідповісти\nКопіювати\n⧉\nКопіювати\nВиділити текст\nＴ\nВиділити текст\nСкасувати\n×\nСкасувати"
+  },
+  {
+    "test": "reply-action",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "quote-visible",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "quote-send",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "quote-received",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "quote-content",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "send-QA257 edit target",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "peer-received-QA257 edit target",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "longpress-889",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "action-sheet-889",
+    "passed": true,
+    "detail": "\n\n\n\n\n\n\n\n\nВаше повідомлення\nQA257 edit target\n\n\n❤️ Реакція ❤️\n😂 Реакція 😂\n👍 Реакція 👍\n😮 Реакція 😮\n😢 Реакція 😢\n😡 Реакція 😡\nВідповісти\n↩\nВідповісти\nКопіювати\n⧉\nКопіювати\nВиділити текст\nＴ\nВиділити текст\nРедагувати\n✎\nРедагувати\nВидалити для обох\n⌫\nВидалити для обох\nВидалити без сліду\n⋯\nВидалити без сліду\nСкасувати\n×\nСкасувати"
+  },
+  {
+    "test": "edit-action",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "edit-dialog",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "clear-field-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "edit-save",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "edit-server",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "clear-field-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "attachment-tool-qa257.txt",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "picker-has-qa257.txt",
+    "passed": true,
+    "detail": "\n\n\n\n\n\n\n\n\n\n\n\n\n\nDownloads\n\n\n\nImages\nAudio\nVideos\nDocuments\n\nFiles in Downloads\n\nList view\n\nShow roots\nDownloads\n\nSearch\nMore options\n\n\n\n\n\n\n\n\n\n\n\n\nPreview the file qa257.png\n\n\n\n\n\nqa257.png\n2.42 kB\n8:34 PM\n\n\n\n\n\n\n\nPreview the file qa257.txt\n\n\n\n\n\nqa257.txt\n38 B\n8:34 PM\n\n"
+  },
+  {
+    "test": "select-qa257.txt",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "picker-return-qa257.txt",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA257 B\nВідкрити профіль QA257 B\nQA257 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nСьогодні\nДії повідомлення 886\nВідкрити профіль співрозмовника\n\nQA257-incoming-a205f8\n23:31 23:31\nДії повідомлення 887\n\nQA257 outgoing verified\n23:33 · ✓✓ Прочитано 23:33. Прочитано\nДії повідомлення 888\n\nQA257-incoming-a205f8\nQA257 quoted reply\n23:34 · ✓✓ Прочитано 23:34. Прочитано\nДії повідомлення 889\n\nQA257 edited\n23:34 · змінено · ✓✓ Прочитано 23:34 · змінено. Прочитано\n\n\n▤\nqa257.txt · 1 КБ\nПереглянути\nПрибрати вкладення\n\n0 / 3000\n\n\n\nСмайли\nЗробити фото\nЗробити фото\nФото\nГолосове повідомлення\nГолосове повідомлення\nГолос\nКругле відео\nКругле відео\nКружечок\nФото та файли\nФото та файли\nФайл\nФорматування\n\nФото"
+  },
+  {
+    "test": "staged-qa257.txt",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA257 B\nВідкрити профіль QA257 B\nQA257 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nСьогодні\nДії повідомлення 886\nВідкрити профіль співрозмовника\n\nQA257-incoming-a205f8\n23:31 23:31\nДії повідомлення 887\n\nQA257 outgoing verified\n23:33 · ✓✓ Прочитано 23:33. Прочитано\nДії повідомлення 888\n\nQA257-incoming-a205f8\nQA257 quoted reply\n23:34 · ✓✓ Прочитано 23:34. Прочитано\nДії повідомлення 889\n\nQA257 edited\n23:34 · змінено · ✓✓ Прочитано 23:34 · змінено. Прочитано\n\n\n▤\nqa257.txt · 1 КБ\nПереглянути\nПрибрати вкладення\n\n0 / 3000\n\n\n\nСмайли\nЗробити фото\nЗробити фото\nФото\nГолосове повідомлення\nГолосове повідомлення\nГолос\nКругле відео\nКругле відео\nКружечок\nФото та файли\nФото та файли\nФайл\nФорматування\n\nФото, файли, голос, смайли та форматування\nПовідомлення… Поле нового повідомлення\nНадіслати повідомлення"
+  },
+  {
+    "test": "file-send",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "file-peer-record",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "file-url",
+    "passed": true,
+    "detail": "https://test.jkunis.eu/?p=attachment&id=74"
+  },
+  {
+    "test": "file-byte-match",
+    "passed": true,
+    "detail": "200"
+  },
+  {
+    "test": "clear-field-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "attachment-tool-qa257.png",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "picker-has-qa257.png",
+    "passed": true,
+    "detail": "\n\n\n\n\n\n\n\n\n\n\n\n\n\nDownloads\n\n\n\nImages\nAudio\nVideos\nDocuments\n\nFiles in Downloads\n\nList view\n\nShow roots\nDownloads\n\nSearch\nMore options\n\n\n\n\n\n\n\n\n\n\n\n\n\nPreview the file qa257.txt\n\n\n\n\n\nqa257.txt\n38 B\n8:34 PM\n\n\n\n\n\n\nPreview the file qa257.png\n\n\n\n\n\nqa257.png\n2.42 kB\n8:34 PM\n\n"
+  },
+  {
+    "test": "select-qa257.png",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "picker-return-qa257.png",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA257 B\nВідкрити профіль QA257 B\nQA257 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nДії повідомлення 886\nВідкрити профіль співрозмовника\n\n23:31 23:31\nДії повідомлення 887\n\nQA257 outgoing verified\n23:33 · ✓✓ Прочитано 23:33. Прочитано\nДії повідомлення 888\n\nQA257-incoming-a205f8\nQA257 quoted reply\n23:34 · ✓✓ Прочитано 23:34. Прочитано\nДії повідомлення 889\n\nQA257 edited\n23:34 · змінено · ✓✓ Прочитано 23:34 · змінено. Прочитано\nДії повідомлення 890\n\n\nФайл · qa257.txt\nВідкрити\nЗберегти файл…\n23:35 · ✓✓ Прочитано 23:35. Прочитано\n\n\nФото в чернетці\nqa257.png · 3 КБ\nПереглянути\nПрибрати вкладення\n\n0 / 3000\n\n\n\nСмайли\nЗробити фото\nЗробити фото\nФото\nГолосове повідомлення\nГолосове повідомлення\nГолос\nК"
+  },
+  {
+    "test": "staged-qa257.png",
+    "passed": true,
+    "detail": "\n\n\n\n\n\nВідкрити меню\nДіалог\nПошук\n\n\n\nПовернутися до діалогів\nВідкрити профіль QA257 B\nВідкрити профіль QA257 B\nQA257 B\nУ мережі\nАудіодзвінок\nВідеодзвінок\nДії діалогу\nІсторія повідомлень\n\nДії повідомлення 886\nВідкрити профіль співрозмовника\n\n23:31 23:31\nДії повідомлення 887\n\nQA257 outgoing verified\n23:33 · ✓✓ Прочитано 23:33. Прочитано\nДії повідомлення 888\n\nQA257-incoming-a205f8\nQA257 quoted reply\n23:34 · ✓✓ Прочитано 23:34. Прочитано\nДії повідомлення 889\n\nQA257 edited\n23:34 · змінено · ✓✓ Прочитано 23:34 · змінено. Прочитано\nДії повідомлення 890\n\n\nФайл · qa257.txt\nВідкрити\nЗберегти файл…\n23:35 · ✓✓ Прочитано 23:35. Прочитано\n\n\nФото в чернетці\nqa257.png · 3 КБ\nПереглянути\nПрибрати вкладення\n\n0 / 3000\n\n\n\nСмайли\nЗробити фото\nЗробити фото\nФото\nГолосове повідомлення\nГолосове повідомлення\nГолос\nКругле відео\nКругле відео\nКружечок\nФото та файли\nФото та файли\nФайл\nФорматування\n\nФото, файли, голос,"
+  },
+  {
+    "test": "photo-send",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "photo-peer-record",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "photo-url",
+    "passed": true,
+    "detail": "https://test.jkunis.eu/?p=attachment&id=75"
+  },
+  {
+    "test": "photo-byte-match",
+    "passed": true,
+    "detail": "200"
+  },
+  {
+    "test": "editor-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "thread-open",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "draft-after-navigation",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "clear-field-present",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "inbox-peer",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "inbox-single-heading",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "search-empty",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "search-clear",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "search-restores",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Активні групи",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Розмова в чаті",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Дописи спільноти",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Свіжі вакансії",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Нове житло",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Фотобатл",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Маркет",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Послуги своїх",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Корисне для вас",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Відпочинок після дня",
+    "passed": false,
+    "detail": ""
+  },
+  {
+    "test": "harness",
+    "passed": false,
+    "detail": "AssertionError: home-section-Відпочинок після дня"
+  }
+]

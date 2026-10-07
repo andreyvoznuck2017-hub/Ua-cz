@@ -4,10 +4,14 @@
   "code": "357",
   "minSdk": "26",
   "targetSdk": "35",
-  "sha256": "6fa39453ac4e35e641f348f8c41abb3cfdc6b5b7ec3a9232698218144beeca71",
+  "sha256": "16477d5774c14198722f8a24d63803a604689408e2dd1a189f8a81af62d3c8d5",
   "v2": true,
   "v3": true,
   "certificateSha256": [
     "8a5a3738f9ff2007825abbe6574afb0bf3a3a9ea33ed4b74e7a6b78332c0012b"
-  ]
+  ],
+  "classesChangedSinceMailPassed": [
+    "Leu/svoyi/nativeapp/HomeScreen257;"
+  ],
+  "mailImplementationUnchanged": true
 }
