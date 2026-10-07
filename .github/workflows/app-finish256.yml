@@ -1,0 +1,52 @@
+name: App completion 2.5.6 baseline diagnosis
+on:
+  push:
+    branches: [android-app-complete-256]
+    paths: ['app-finish256/**', '.github/workflows/app-finish256.yml']
+permissions:
+  contents: read
+concurrency:
+  group: app-complete-256
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare existing candidate
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libsmali-java
+          python3 -m pip install requests beautifulsoup4 pillow
+          cp app-finish254/published/Svoyi-Final-2.5.4-QA.apk app-finish255/baseline254.apk
+          python3 app-finish255/build.py
+          BT="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          PASS="$(openssl rand -hex 18)"
+          keytool -genkeypair -keystore /tmp/qa.p12 -storetype PKCS12 -storepass "$PASS" -keypass "$PASS" -alias qa -keyalg RSA -keysize 3072 -validity 3650 -dname 'CN=Svoyi Isolated QA'
+          "$BT/zipalign" -f 4 app-finish255/releases/Svoyi-Final-2.5.5-QA-unsigned.apk /tmp/aligned.apk
+          "$BT/apksigner" sign --ks /tmp/qa.p12 --ks-pass "pass:$PASS" --out app-finish256/candidate.apk /tmp/aligned.apk
+          "$BT/zipalign" -c 4 app-finish256/candidate.apk
+          "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 app-finish256/candidate.apk
+      - name: Enable test emulator
+        run: if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -lc 'APK=app-finish256/candidate.apk BEFORE_APK=app-finish254/published/Svoyi-Final-2.5.4-QA.apk QA_OUT=completion-qa python3 app-finish256/qa.py'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: completion-baseline-${{ github.run_number }}
+          path: completion-qa/
+          retention-days: 7
