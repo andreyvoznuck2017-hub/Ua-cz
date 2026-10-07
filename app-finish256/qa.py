@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json,os,re,secrets,subprocess,time,traceback,hashlib
+import json,os,re,secrets,subprocess,time,traceback,hashlib,shlex
 from pathlib import Path
 from urllib.parse import urljoin,urlparse
 import requests
@@ -335,6 +335,16 @@ try:
             shot("dating-profile")
             must("dating-return-button",tap("До знайомств") or tap("До добірки"));must("dating-return-keeps-filters",wait(lambda:hero() is not None and "50 км" in blob(),20))
             shot("dating-catalog-after-return")
+            for subtab in ("random","sent"):
+                subroute="/?p=dating&tab="+subtab
+                submodel=api(a["s"],{"op":"screen","route":subroute,"nativeScreens":["dating"]})
+                must("api-dating-"+subtab,submodel.get("page")=="dating" and bool(submodel.get("dating")))
+                save("model-dating-"+subtab+".json",submodel)
+                adb("shell","am","start","-n",PKG+"/eu.svoyi.nativeapp.MainActivity","-a","android.intent.action.VIEW","-d",shlex.quote(ORIGIN+subroute),"--activity-single-top")
+                time.sleep(4);wait(lambda:"Завантаження…" not in blob(),20)
+                text=blob();must("native-dating-"+subtab,"Знайомства" in text and "Не вдалося" not in text,text[:900])
+                shot("dating-"+subtab)
+
 
     for page in ("housing","events"):
         rr=api(a["s"],{"op":"screen","route":"/?p="+page+"&create=1"})

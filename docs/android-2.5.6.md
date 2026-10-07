@@ -5,7 +5,7 @@ Endpoint: `https://test.jkunis.eu`.
 
 ## Changes
 
-- Accept current server dating profile links with a validated local `back` route; retain all catalog filters on return. Reject foreign origins, mismatched profile IDs, duplicate parameters and non-catalog back routes.
+- Accept current server dating profile links with a validated local `back` route; retain all catalog filters on return. Reject foreign origins, mismatched profile IDs, duplicate parameters and non-catalog back routes. Preserve the current random and sent (My Likes) tabs when applying filters. The route contract has 28 checks.
 
 - Replace the stacked 252–255 UI passes with one lifecycle-guarded pass. Preserve native focus listeners, screen-specific scroll restoration, image dimensions and dating swipe navigation.
 - Flush mail drafts before navigation and opening settings invalidate the current screen generation. Retain encrypted, account-scoped draft storage.

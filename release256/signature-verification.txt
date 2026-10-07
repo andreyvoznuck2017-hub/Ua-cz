@@ -1,4 +1,4 @@
-Process started with PID 7704 (shell: powershell)
+Process started with PID 18812 (shell: powershell)
 Initial output:
 Verifies
 Verified using v1 scheme (JAR signing): false
@@ -17,7 +17,7 @@ Signer #1 key size (bits): 3072
 Signer #1 public key SHA-256 digest: 2a0649e4698a40f4e4261a191b7f534aa7616fc6947f09b12178d46fa608adcc
 Signer #1 public key SHA-1 digest: 0bd1a027fb596bac0c2c9adbb4dece5ab36061da
 Signer #1 public key MD5 digest: cb7ba0b62eb638deff0df391086ee06e
-AF4FC492DE34251B638E5FC4072EE02051D8055F7E0AEB3EBCAA6D89FC6CE849
+9C63054162928225EC133D8062C7DDEC600B7CD92A7DF7CFB363E2025AE59BBE
 
 
 [executed on device: MSI (6b59d763-4cab-45c5-9dcd-a75972bac43c)]

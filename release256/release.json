@@ -2,7 +2,7 @@
   "version": "2.5.6",
   "versionCode": 356,
   "baseline_sha256": "7bd53cd66aad5aae50930119d61557067aa9de49f73f69f71181666e42dfe345",
-  "unsigned_sha256": "ccb3dba902b12532a21643d086fdfa6b161756f105fb596fccd0178adf7e204f",
+  "unsigned_sha256": "954baf9573ba25062a46cb618d037dbd52fb13ac1e5858f7159b960836d163a3",
   "package": "eu.svoyi.qa.finish255",
   "features": [
     "single lifecycle-guarded UI pass replaces four conflicting passes",
@@ -15,7 +15,7 @@
   ],
   "server_changed": false,
   "owner_signing_key_used": true,
-  "apk_sha256": "af4fc492de34251b638e5fc4072ee02051d8055f7e0aeb3ebcaa6d89fc6ce849",
+  "apk_sha256": "9c63054162928225ec133d8062c7ddec600b7cd92a7df7cfb363e2025ae59bbe",
   "certificate_sha256": "8a5a3738f9ff2007825abbe6574afb0bf3a3a9ea33ed4b74e7a6b78332c0012b",
-  "source_commit": "0fcf10c9c20d083d8e5f5853cbd99d9ec67343e9"
+  "source_commit": "bc7964d5a4e9179557815305ed8bd009152d2435"
 }
