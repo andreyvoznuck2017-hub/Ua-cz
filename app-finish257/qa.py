@@ -108,7 +108,7 @@ def install_login(apk,a):
         b=next((n for n in nodes() if n.get("class")=="android.widget.Button" and "Увійти" in n.get("text","")),None)
         if b is not None:tap_node(b);break
         adb("shell","input","swipe","500","1500","500","600","250");time.sleep(.3)
-    must("login-success",wait(lambda:"Вітаємо" in blob(),35))
+    must("login-success",wait(lambda:("Вітаємо" in blob() or a["name"] in blob()) and "Увійти" not in blob(),35))
 
 def open_thread(peer):
     hide_keyboard()
@@ -238,13 +238,14 @@ try:
     route("/?p=messages");must("inbox-peer",b["name"] in blob());must("inbox-single-heading",sum(n.get("text")=="Повідомлення" for n in nodes())==2);shot("inbox-populated")
     search=next(n for n in nodes() if n.get("class")=="android.widget.EditText");tap_node(search);adb("shell","input","text","ZZZ-no-match257");hide_keyboard();must("search-empty",wait(lambda:"Нічого не знайдено" in blob(),12));shot("inbox-search-empty");must("search-clear",tap("Очистити пошук діалогів","content-desc"));must("search-restores",wait(lambda:b["name"] in blob(),10))
     route("/?p=home");shot("home-top");seen=blob()
-    for i in range(10):
-        adb("shell","input","swipe","500","1600","500","500","300");time.sleep(.3);part=blob();seen+="\n"+part;shot("home-"+str(i+1))
+    for i in range(26):
+        adb("shell","input","swipe","500","1450","500","900","700");time.sleep(.3);part=blob();seen+="\n"+part
+        if i%3==0:shot("home-"+str(i+1))
         if "Відпочинок після дня" in part:break
     for label in ["Активні групи","Розмова в чаті","Дописи спільноти","Свіжі вакансії","Нове житло","Фотобатл","Маркет","Послуги своїх","Корисне для вас","Відпочинок після дня"]:must("home-section-"+label,label in seen)
     route("/?p=home&lang=en");must("english-home",wait(lambda:"Posts" in blob() or "Welcome" in blob() or "Home" in blob(),20));shot("home-english")
     route("/?p=home&lang=uk");route("/?native=settings");shot("theme-settings")
-    dark=next((n for n in nodes() if "Темна" in n.get("content-desc","") and n.get("clickable")=="true"),None)
+    dark=next((n for n in nodes() if ("Темна" in n.get("content-desc","") or "Українська ніч" in n.get("content-desc","") or "Українська ніч" in n.get("text","")) and n.get("clickable")=="true"),None)
     if dark is not None:
         tap_node(dark);time.sleep(1);route("/?p=home");must("dark-home","Вітаємо" in blob());shot("home-dark");open_thread(b);shot("mail-dark")
     else:check("theme-control",False,"Dark theme not found")

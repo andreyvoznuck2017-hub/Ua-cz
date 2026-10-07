@@ -272,6 +272,9 @@ public final class HomeScreen257 {
     private View preview(JSONObject n){
         boolean avatar=n.optBoolean("avatar");String image=n.optString("image",n.optString("src",""));
         String title=n.optString("title",n.optString("text",""));JSONArray lines=array(n,"lines");
+        if("cover".equals(n.optString("layout"))&&!image.isEmpty()){
+            FrameLayout frame=new FrameLayout(activity);frame.setBackground(round(bg,12,border));frame.setClipToOutline(true);View photo=host.image(image);if(photo instanceof ImageView)((ImageView)photo).setScaleType(ImageView.ScaleType.CENTER_CROP);if(photo!=null)frame.addView(photo,new FrameLayout.LayoutParams(-1,dp(200)));frame.setContentDescription(title);frame.setFocusable(true);frame.setOnClickListener(v->{if(host.alive())host.navigate(AppFinish252.route(n.optString("route")));});return frame;
+        }
         LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(6),dp(7),dp(6),dp(7));row.setMinimumHeight(dp(48));
         if(!image.isEmpty()){
             FrameLayout frame=new FrameLayout(activity);frame.setBackground(round(bg,avatar?40:10,border));frame.setClipToOutline(true);View im=host.image(image);if(im instanceof ImageView)((ImageView)im).setScaleType(ImageView.ScaleType.CENTER_CROP);if(im!=null)frame.addView(im,new FrameLayout.LayoutParams(-1,-1));
@@ -284,11 +287,7 @@ public final class HomeScreen257 {
     }
 
     private static String locale(JSONObject model){
-        JSONObject state=model==null?null:model.optJSONObject("state");
-        String x=state==null?"":state.optString("language","");
-        if(x.isEmpty())x=model==null?"":model.optString("language","");
-        x=x==null?"":x.toLowerCase(Locale.ROOT);
-        return x.startsWith("cs")?"cs":x.startsWith("en")?"en":"uk";
+        return MailScreen257.language(model);
     }
     private String t(String uk,String cs,String en){return language.equals("cs")?cs:language.equals("en")?en:uk;}
 

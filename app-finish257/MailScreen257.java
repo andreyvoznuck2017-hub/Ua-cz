@@ -17,10 +17,16 @@ import java.util.*;
 public final class MailScreen257 {
     private MailScreen257(){}
     private static final WeakHashMap<Activity,String> languages=new WeakHashMap<>();
+    static String language(JSONObject model){
+        if(model==null)return "uk";JSONObject state=model.optJSONObject("state");
+        String value=state==null?model.optString("language"):state.optString("language",model.optString("language"));
+        if(value.isEmpty())try{value=android.net.Uri.parse(model.optString("route")).getQueryParameter("lang");}catch(RuntimeException ignored){}
+        if(value!=null&&!value.isEmpty())return value.startsWith("cs")?"cs":value.startsWith("en")?"en":"uk";
+        org.json.JSONArray menu=model.optJSONArray("menu");if(menu!=null)for(int i=0;i<menu.length();i++){JSONObject item=menu.optJSONObject(i);if(item!=null&&"home".equals(item.optString("key"))){String label=item.optString("text").toLowerCase(Locale.ROOT);if(label.equals("home"))return "en";if(label.contains("domů")||label.contains("hlavní")||label.contains("domov"))return "cs";}}
+        return "uk";
+    }
     public static void remember(Activity a,JSONObject model){
-        if(a==null||model==null)return;JSONObject state=model.optJSONObject("state");
-        String language=state==null?model.optString("language"):state.optString("language",model.optString("language"));
-        languages.put(a,language.startsWith("cs")?"cs":language.startsWith("en")?"en":"uk");
+        if(a==null||model==null)return;languages.put(a,language(model));
     }
     private static String t(NativeMailScreen s,String uk,String cs,String en){String l=languages.get(s.activity);return "cs".equals(l)?cs:"en".equals(l)?en:uk;}
     private static int dp(NativeMailScreen s,float n){return Math.round(n*s.activity.getResources().getDisplayMetrics().density);}
