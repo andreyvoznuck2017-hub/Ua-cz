@@ -1,0 +1,162 @@
+[
+  {
+    "test": "login-fields",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-field-email",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-field-password",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "login-success",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "update-256-to-final257",
+    "passed": true,
+    "detail": "Performing Streamed Install\nSuccess\n"
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "version-257",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "session-retained",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Активні групи",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Розмова в чаті",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Дописи спільноти",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Свіжі вакансії",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Нове житло",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Фотобатл",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Маркет",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Послуги своїх",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Корисне для вас",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "home-section-Відпочинок після дня",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "market-visible-title-and-price",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "service-visible-title-and-price",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "english-home",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "english-mail",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "night-theme-control",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "route-loaded",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "no-fatal",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "fresh-install-final257",
+    "passed": true,
+    "detail": "Performing Streamed Install\nSuccess\n"
+  },
+  {
+    "test": "fresh-launch-final257",
+    "passed": true,
+    "detail": ""
+  }
+]
