@@ -98,7 +98,11 @@ def install_login(apk,a):
     ed=[n for n in nodes() if n.get("class")=="android.widget.EditText"]
     must("login-fields-"+apk.stem,len(ed)>=2,str(len(ed)))
     for i,val in [(0,a["email"]),(1,a["pw"])]:
-        tap_node(ed[i]);adb("shell","input","text",val)
+        hide_keyboard()
+        current=[n for n in nodes() if n.get("class")=="android.widget.EditText"]
+        tap_node(current[i]);time.sleep(.5);adb("shell","input","text",val);time.sleep(.3)
+        current=[n for n in nodes() if n.get("class")=="android.widget.EditText"]
+        must("login-field-value-"+str(i),current[i].get("text","")==val if i==0 else len(current[i].get("text",""))==len(val))
     hide_keyboard();must("login-submit-"+apk.stem,tap("Увійти"));time.sleep(7);retry_connection()
     must("login-success-"+apk.stem,wait(lambda:"Увійти" not in blob() and ("Головна" in blob() or "Кабінет" in blob()),30),blob()[:700])
 
@@ -207,7 +211,19 @@ try:
     res=api(b["s"],{"op":"mail-action","action":"send","route":"/?p=messages&with="+str(a["id"]),"peer":a["id"],"body":seed,"nonce":secrets.token_hex(16),"csrf":b["state"]["csrf"],"expectedAccount":b["id"],"kind":"text"})
     must("seed-message",res.get("ok"),str(res)[:700]);seedid=res["message"]["id"]
 
-    install_login(APK,a);open_thread(b);must("seed-visible",wait(lambda:seed in blob(),20));shot("mail-thread")
+    install_login(BEFORE,a)
+    if os.environ.get("QA_API")=="36":
+        open_thread(b);enter("UpgradeDraft256");hide_keyboard();time.sleep(1)
+    adb("shell","am","force-stop",PKG)
+    result=adb("install","-r",str(APK),timeout=120).decode()
+    must("same-key-update-255-to-256","Success" in result,result)
+    adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
+    must("upgrade-keeps-session","Увійти" not in blob())
+    must("installed-version-256","versionName=2.5.6" in adb("shell","dumpsys","package",PKG).decode())
+    open_thread(b)
+    if os.environ.get("QA_API")=="36":
+        must("upgrade-keeps-draft",current_input()=="UpgradeDraft256",current_input());clear_current()
+    must("seed-visible",wait(lambda:seed in blob(),20));shot("mail-thread")
 
     c=composer_node();cb=bounds(c) if c is not None else []
     must("composer-min-height",len(cb)==4 and cb[3]-cb[1]>=48,str(cb))
@@ -269,19 +285,19 @@ try:
     shot("draft-after-navigation")
 
     # Open the actual native sections and inspect matching server models.
-    routes=[("home","Головна"),("profile","Кабінет"),("groups","Спільноти"),
-            ("feed","Стрічка"),("dating","Знайомства"),("nearby","Поруч"),
+    routes=[("home","Головна"),("profile","Кабінет"),("groups","Групи"),
+            ("feed","Спільнота"),("dating","Знайомства"),("nearby","поруч"),
             ("housing","Житло"),("events","Події"),("notifications","Сповіщення")]
     for page,title in routes:
         route="/?p="+page
-        rr=api(a["s"],{"op":"screen","route":route})
+        rr=api(a["s"],{"op":"screen","route":route,"nativeScreens":["catalog","detail","housing","groups","dating","form-drafts","shop","mail","home-previews","profile-sections","profile-tools","profile-wall"]})
         must("api-"+page,rr.get("page")==page,rr.get("page",""))
         save("model-"+page+".json",rr)
         hide_keyboard()
         adb("shell","am","start","-n",PKG+"/eu.svoyi.nativeapp.MainActivity","-a","android.intent.action.VIEW","-d",ORIGIN+route,"--activity-single-top")
-        time.sleep(4);retry_connection()
+        time.sleep(4);retry_connection();wait(lambda:"Завантаження…" not in blob(),20)
         text=blob();must("native-"+page,"Увійти" not in text and "Не вдалося" not in text,text[:900])
-        must("native-visible-"+page,title in text or str(rr.get("title","__NO_TITLE__")) in text,text[:900])
+        must("native-visible-"+page,title.lower() in text.lower(),text[:900])
         shot("section-"+page)
     for page in ("housing","events"):
         rr=api(a["s"],{"op":"screen","route":"/?p="+page+"&create=1"})

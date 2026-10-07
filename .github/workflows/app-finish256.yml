@@ -2,7 +2,7 @@ name: Svoyi 2.5.6 build and native QA
 on:
   push:
     branches: [android-app-complete-256]
-    paths: ['app-finish256/**', '.github/workflows/app-finish256.yml']
+    paths: ['app-finish256/**', 'release256/**', '.github/workflows/app-finish256.yml']
 permissions:
   contents: read
 concurrency:
@@ -32,6 +32,17 @@ jobs:
           "$BT/apksigner" sign --ks /tmp/qa.p12 --ks-pass env:QA_KEY_PASSWORD --out app-finish256/releases/candidate-QA-only.apk /tmp/aligned.apk
           "$BT/zipalign" -c 4 app-finish256/releases/candidate-QA-only.apk
           "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 app-finish256/releases/candidate-QA-only.apk
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          import hashlib
+          signed='release256/Svoyi-2.5.6.apk'
+          assert hashlib.sha256(open(signed,'rb').read()).hexdigest()=='232ebeb1ea3fafec406cae226942879ff552ed3a0ff3aa522ac346a829bc6a09'
+          with ZipFile(signed) as release, ZipFile('app-finish256/releases/Svoyi-2.5.6-unsigned.apk') as built:
+              for name in built.namelist():
+                  assert built.read(name)==release.read(name),name
+          PY
+          "$BT/apksigner" verify --min-sdk-version 26 --max-sdk-version 36 --print-certs release256/Svoyi-2.5.6.apk
+          "$BT/zipalign" -c 4 release256/Svoyi-2.5.6.apk
           "$BT/aapt" dump badging app-finish256/releases/candidate-QA-only.apk > app-finish256/releases/package.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -68,7 +79,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash -lc 'APK=payload/candidate-QA-only.apk QA_API=${{ matrix.api }} QA_OUT=completion-qa python3 app-finish256/qa.py'
+          script: bash -lc 'APK=release256/Svoyi-2.5.6.apk BEFORE_APK=release256/Svoyi-2.5.5.apk QA_API=${{ matrix.api }} QA_OUT=completion-qa python3 app-finish256/qa.py'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
