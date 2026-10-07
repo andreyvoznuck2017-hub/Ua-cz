@@ -67,7 +67,8 @@ def shot(name):
 def keyboard():
     return "mInputShown=true" in adb("shell","dumpsys","input_method",allow_fail=True).decode(errors="replace")
 def hide_keyboard():
-    if keyboard():adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(.8)
+    visible=keyboard() or any(n.get("package","") in ("com.google.android.inputmethod.latin","com.android.inputmethod.latin") for n in nodes())
+    if visible:adb("shell","input","keyevent","KEYCODE_BACK");time.sleep(.8)
 def api(session,body):
     r=session.post(ORIGIN+"/native.php",json=body,timeout=45,headers={"User-Agent":"SvoyiNative/2.5.7 QA"})
     r.raise_for_status();return r.json()
@@ -100,9 +101,16 @@ def install_login(apk,a):
         if len(ed)>=2:break
         adb("shell","input","swipe","500","1600","500","500","250");time.sleep(.3)
     must("login-fields",len(ed)>=2)
-    for i,val in [(0,a["email"]),(1,a["pw"])]:
-        ed=[n for n in nodes() if n.get("package")==PKG and n.get("class")=="android.widget.EditText"]
-        tap_node(ed[i]);adb("shell","input","text",val);time.sleep(.4)
+    for field,val in [("email",a["email"]),("password",a["pw"])]:
+        hide_keyboard()
+        target=None
+        for _ in range(10):
+            ed=[n for n in nodes() if n.get("package")==PKG and n.get("class")=="android.widget.EditText"]
+            target=next((n for n in ed if field in n.get("content-desc","").lower() or (field=="password" and n.get("password")=="true")),None)
+            if target is not None:break
+            adb("shell","input","swipe","500","1550","500","1050","650");time.sleep(.3)
+        must("login-field-"+field,target is not None)
+        tap_node(target);adb("shell","input","text",val);time.sleep(.4)
     hide_keyboard()
     for i in range(8):
         b=next((n for n in nodes() if n.get("class")=="android.widget.Button" and "Увійти" in n.get("text","")),None)
@@ -250,6 +258,10 @@ try:
         tap_node(dark);time.sleep(1);route("/?p=home");must("dark-home","Вітаємо" in blob());shot("home-dark");open_thread(b);shot("mail-dark")
     else:check("theme-control",False,"Dark theme not found")
     log=adb("logcat","-d","-b","crash").decode(errors="replace");save("crashes.txt",log);must("no-fatal","FATAL EXCEPTION" not in log)
+    # The runner is disposable. Check a fresh install after the data-preserving update tests.
+    adb("uninstall",PKG);result=adb("install","-g",str(APK),timeout=120).decode();must("fresh-install-257","Success" in result,result)
+    adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(5)
+    must("fresh-launch-257",wait(lambda:any(n.get("package")==PKG for n in nodes()),20));shot("fresh-install")
 except Exception as e:
     check("harness",False,type(e).__name__+": "+str(e));save("error.txt",traceback.format_exc())
 finally:
