@@ -13,7 +13,7 @@ public final class DatingRoute256 {
     private DatingRoute256() {}
     private static final String ORIGIN = "https://test.jkunis.eu";
     private static final Set<String> TABS = new HashSet<>(Arrays.asList(
-            "discover", "matches", "likes", "favorites", "views", "random"));
+            "discover", "matches", "likes", "favorites", "views", "random", "sent"));
     private static final Set<String> PROFILE = new HashSet<>(Arrays.asList("p", "view", "from", "back"));
     private static final Set<String> FILTERS = new HashSet<>(Arrays.asList(
             "p", "tab", "city", "country", "gender", "goal", "age_from", "age_to", "radius", "near", "online"));
@@ -64,6 +64,10 @@ public final class DatingRoute256 {
             if (fields.containsKey("back")) back(fields.get("back"), origin);
             return true;
         } catch (Exception invalid) { return false; }
+    }
+
+    public static String tab(String value) {
+        return TABS.contains(value) ? value : "discover";
     }
 
     public static String returnRoute(String route) {

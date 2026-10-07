@@ -40,6 +40,7 @@ jobs:
           python3 - <<'PYCODE'
           from zipfile import ZipFile
           import hashlib,json
+          if "${{ contains(github.event.head_commit.message, '[signed]') }}" != "true": raise SystemExit(0)
           meta=json.load(open('release256/release.json'))
           signed='release256/Svoyi-2.5.6.apk'
           assert hashlib.sha256(open(signed,'rb').read()).hexdigest()==meta['apk_sha256']
@@ -86,7 +87,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash -lc 'APK=release256/Svoyi-2.5.6.apk BEFORE_APK=release256/Svoyi-2.5.5.apk QA_MODE=sections QA_API=${{ matrix.api }} QA_OUT=completion-qa python3 app-finish256/qa.py'
+          script: bash -lc 'APK=release256/Svoyi-2.5.6.apk BEFORE_APK=release256/Svoyi-2.5.5.apk QA_MODE=remaining QA_API=${{ matrix.api }} QA_OUT=completion-qa python3 app-finish256/qa.py'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

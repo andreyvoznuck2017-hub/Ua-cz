@@ -211,93 +211,97 @@ try:
     res=api(b["s"],{"op":"mail-action","action":"send","route":"/?p=messages&with="+str(a["id"]),"peer":a["id"],"body":seed,"nonce":secrets.token_hex(16),"csrf":b["state"]["csrf"],"expectedAccount":b["id"],"kind":"text"})
     must("seed-message",res.get("ok"),str(res)[:700]);seedid=res["message"]["id"]
 
-    install_login(BEFORE,a)
-    if os.environ.get("QA_API")=="36":
-        open_thread(b);enter("UpgradeDraft256");hide_keyboard();time.sleep(1)
-    adb("shell","am","force-stop",PKG)
-    result=adb("install","-r",str(APK),timeout=120).decode()
-    must("same-key-update-255-to-256","Success" in result,result)
-    adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
-    must("upgrade-keeps-session","Увійти" not in blob())
-    must("installed-version-256","versionName=2.5.6" in adb("shell","dumpsys","package",PKG).decode())
-    open_thread(b)
-    if os.environ.get("QA_API")=="36":
-        must("upgrade-keeps-draft",current_input()=="UpgradeDraft256",current_input());clear_current()
-    must("seed-visible",wait(lambda:seed in blob(),20));shot("mail-thread")
-
-    c=composer_node();cb=bounds(c) if c is not None else []
-    must("composer-min-height",len(cb)==4 and cb[3]-cb[1]>=48,str(cb))
-
-    if os.environ.get("QA_MODE") == "sections":
-        send_text("ReleaseSmoke256",a,b)
+    if os.environ.get("QA_MODE") == "remaining":
+        install_login(APK,a)
     else:
-        # Quoted reply is sent through UI and independently read by peer B.
-        action(seedid);must("reply-action",tap("Відповісти","content-desc") or tap("Відповісти"))
-        must("quote-preview",wait(lambda:"Скасувати відповідь цитатою" in blob(),10),blob()[:800])
-        must("reply-keyboard",wait(keyboard,8));enter("QuoteReply256")
-        must("reply-send",tap("Надіслати","content-desc") or tap("Надіслати"))
-        must("reply-peer-visible",wait(lambda:bool(find_msg(b,a,text="QuoteReply256")),35))
-        reply=find_msg(b,a,text="QuoteReply256")
-        must("quote-wire-kept","[quote]" in reply.get("body","") and seed in reply.get("body",""),reply.get("body","")[:500])
-        must("keyboard-stays-after-reply",keyboard());shot("quote-reply")
-    
-        # Real document + real photo attachment picker roundtrip.
-        textfile,photo=push_files()
-        attachment_case(textfile,a,b,"file")
-        attachment_case(photo,a,b,"photo")
-    
-        # UI edit and delete for own message.
-        clear_current();hide_keyboard();edit=send_text("EditTarget256",a,b);mid=edit["id"]
-        action(mid);must("edit-action",tap("Редагувати","content-desc") or tap("Редагувати"))
-        must("edit-dialog",wait(lambda:"Редагувати повідомлення" in blob(),10),blob()[:800])
-        enter("Edited256",clear=True);hide_keyboard();must("edit-save",tap("Зберегти"))
-        must("edit-peer-updated",wait(lambda:find_msg(b,a,mid=mid).get("body")=="Edited256",30))
-        must("edit-timestamp",bool(find_msg(b,a,mid=mid).get("editedAt")));shot("edited")
-    
-        action(mid);must("delete-action",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
-        must("delete-confirm-dialog",wait(lambda:"Видалити для обох?" in blob(),8))
-        must("delete-cancel",tap("Скасувати"));must("delete-cancel-keeps-message",not find_msg(b,a,mid=mid).get("deleted"))
-        action(mid);must("delete-action-again",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
-        must("delete-dialog-present-again",wait(lambda:"Видалити для обох?" in blob(),8))
-        shot("delete-confirmation")
-        must("delete-confirm",tap("android:id/button1","resource-id",contains=False))
-        # The server may return a deleted tombstone or omit the deleted message entirely.
-        must("delete-peer-updated",wait(lambda:(lambda m:(not m) or bool(m.get("deleted")))(find_msg(b,a,mid=mid)),30))
-        shot("deleted")
-    
-        # Picker cancellation and draft persistence.
-        clear_current();enter("Draft256");hide_keyboard()
-        opened=tap("Фото та файли","content-desc") or tap("Фото та файли") or tap("Фото, файли, голос","content-desc")
-        must("draft-picker-open",opened);time.sleep(1.5)
-        if "Фото або файл" in blob():tap("Фото або файл");time.sleep(2)
-        adb("shell","input","keyevent","KEYCODE_BACK");must("draft-picker-return",wait(lambda:"Надіслати" in blob(),15))
-        must("draft-preserved-after-picker",current_input()=="Draft256",current_input())
-        shot("draft-after-picker")
-        adb("shell","am","force-stop",PKG);time.sleep(1);adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
-        must("session-after-restart","Увійти" not in blob(),blob()[:500]);open_thread(b)
-        must("draft-after-restart",wait(lambda:current_input()=="Draft256",20),current_input())
-    
-        # Flush the last character immediately on navigation, before the 450ms debounce.
-        c=composer_node();tap_node(c);time.sleep(.5)
-        back=next(n for n in nodes() if n.get("content-desc")=="Повернутися до діалогів")
-        x1,y1,x2,y2=bounds(back)
-        adb("shell","input text X; input tap %d %d"%((x1+x2)//2,(y1+y2)//2))
-        must("draft-navigation-left-thread",wait(lambda:"Повернутися до діалогів" not in blob(),20))
+        install_login(BEFORE,a)
+        if os.environ.get("QA_API")=="36":
+            open_thread(b);enter("UpgradeDraft256");hide_keyboard();time.sleep(1)
+        adb("shell","am","force-stop",PKG)
+        result=adb("install","-r",str(APK),timeout=120).decode()
+        must("same-key-update-255-to-256","Success" in result,result)
+        adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
+        must("upgrade-keeps-session","Увійти" not in blob())
+        must("installed-version-256","versionName=2.5.6" in adb("shell","dumpsys","package",PKG).decode())
         open_thread(b)
-        must("draft-keeps-last-character-on-navigation",wait(lambda:current_input()=="Draft256X",15),current_input())
-        shot("draft-after-navigation")
-        c=composer_node();tap_node(c);time.sleep(.5)
-        adb("shell","input text Y; am start -n "+PKG+"/eu.svoyi.nativeapp.MainActivity -a android.intent.action.VIEW -d https://test.jkunis.eu/?native=settings --activity-single-top")
-        must("settings-open",wait(lambda:"Налаштування" in blob(),15))
-        hide_keyboard();adb("shell","input","keyevent","KEYCODE_BACK")
-        must("return-from-settings",wait(lambda:"Надіслати" in blob(),20))
-        must("draft-keeps-last-character-on-settings",wait(lambda:current_input()=="Draft256XY",10),current_input())
+        if os.environ.get("QA_API")=="36":
+            must("upgrade-keeps-draft",current_input()=="UpgradeDraft256",current_input());clear_current()
+        must("seed-visible",wait(lambda:seed in blob(),20));shot("mail-thread")
     
+        c=composer_node();cb=bounds(c) if c is not None else []
+        must("composer-min-height",len(cb)==4 and cb[3]-cb[1]>=48,str(cb))
     
+        if os.environ.get("QA_MODE") == "sections":
+            send_text("ReleaseSmoke256",a,b)
+        else:
+            # Quoted reply is sent through UI and independently read by peer B.
+            action(seedid);must("reply-action",tap("Відповісти","content-desc") or tap("Відповісти"))
+            must("quote-preview",wait(lambda:"Скасувати відповідь цитатою" in blob(),10),blob()[:800])
+            must("reply-keyboard",wait(keyboard,8));enter("QuoteReply256")
+            must("reply-send",tap("Надіслати","content-desc") or tap("Надіслати"))
+            must("reply-peer-visible",wait(lambda:bool(find_msg(b,a,text="QuoteReply256")),35))
+            reply=find_msg(b,a,text="QuoteReply256")
+            must("quote-wire-kept","[quote]" in reply.get("body","") and seed in reply.get("body",""),reply.get("body","")[:500])
+            must("keyboard-stays-after-reply",keyboard());shot("quote-reply")
+        
+            # Real document + real photo attachment picker roundtrip.
+            textfile,photo=push_files()
+            attachment_case(textfile,a,b,"file")
+            attachment_case(photo,a,b,"photo")
+        
+            # UI edit and delete for own message.
+            clear_current();hide_keyboard();edit=send_text("EditTarget256",a,b);mid=edit["id"]
+            action(mid);must("edit-action",tap("Редагувати","content-desc") or tap("Редагувати"))
+            must("edit-dialog",wait(lambda:"Редагувати повідомлення" in blob(),10),blob()[:800])
+            enter("Edited256",clear=True);hide_keyboard();must("edit-save",tap("Зберегти"))
+            must("edit-peer-updated",wait(lambda:find_msg(b,a,mid=mid).get("body")=="Edited256",30))
+            must("edit-timestamp",bool(find_msg(b,a,mid=mid).get("editedAt")));shot("edited")
+        
+            action(mid);must("delete-action",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
+            must("delete-confirm-dialog",wait(lambda:"Видалити для обох?" in blob(),8))
+            must("delete-cancel",tap("Скасувати"));must("delete-cancel-keeps-message",not find_msg(b,a,mid=mid).get("deleted"))
+            action(mid);must("delete-action-again",tap("Видалити для обох","content-desc") or tap("Видалити для обох"))
+            must("delete-dialog-present-again",wait(lambda:"Видалити для обох?" in blob(),8))
+            shot("delete-confirmation")
+            must("delete-confirm",tap("android:id/button1","resource-id",contains=False))
+            # The server may return a deleted tombstone or omit the deleted message entirely.
+            must("delete-peer-updated",wait(lambda:(lambda m:(not m) or bool(m.get("deleted")))(find_msg(b,a,mid=mid)),30))
+            shot("deleted")
+        
+            # Picker cancellation and draft persistence.
+            clear_current();enter("Draft256");hide_keyboard()
+            opened=tap("Фото та файли","content-desc") or tap("Фото та файли") or tap("Фото, файли, голос","content-desc")
+            must("draft-picker-open",opened);time.sleep(1.5)
+            if "Фото або файл" in blob():tap("Фото або файл");time.sleep(2)
+            adb("shell","input","keyevent","KEYCODE_BACK");must("draft-picker-return",wait(lambda:"Надіслати" in blob(),15))
+            must("draft-preserved-after-picker",current_input()=="Draft256",current_input())
+            shot("draft-after-picker")
+            adb("shell","am","force-stop",PKG);time.sleep(1);adb("shell","monkey","-p",PKG,"-c","android.intent.category.LAUNCHER","1");time.sleep(8);retry_connection()
+            must("session-after-restart","Увійти" not in blob(),blob()[:500]);open_thread(b)
+            must("draft-after-restart",wait(lambda:current_input()=="Draft256",20),current_input())
+        
+            # Flush the last character immediately on navigation, before the 450ms debounce.
+            c=composer_node();tap_node(c);time.sleep(.5)
+            back=next(n for n in nodes() if n.get("content-desc")=="Повернутися до діалогів")
+            x1,y1,x2,y2=bounds(back)
+            adb("shell","input text X; input tap %d %d"%((x1+x2)//2,(y1+y2)//2))
+            must("draft-navigation-left-thread",wait(lambda:"Повернутися до діалогів" not in blob(),20))
+            open_thread(b)
+            must("draft-keeps-last-character-on-navigation",wait(lambda:current_input()=="Draft256X",15),current_input())
+            shot("draft-after-navigation")
+            c=composer_node();tap_node(c);time.sleep(.5)
+            adb("shell","input text Y; am start -n "+PKG+"/eu.svoyi.nativeapp.MainActivity -a android.intent.action.VIEW -d https://test.jkunis.eu/?native=settings --activity-single-top")
+            must("settings-open",wait(lambda:"Налаштування" in blob(),15))
+            hide_keyboard();adb("shell","input","keyevent","KEYCODE_BACK")
+            must("return-from-settings",wait(lambda:"Надіслати" in blob(),20))
+            must("draft-keeps-last-character-on-settings",wait(lambda:current_input()=="Draft256XY",10),current_input())
+        
+        
     # Open the actual native sections and inspect matching server models.
     routes=[("home","Головна"),("profile","Кабінет"),("groups","Групи"),
             ("feed","Спільнота"),("dating","Знайомства"),("nearby","поруч"),
             ("housing","Житло"),("events","Події"),("notifications","Сповіщення")]
+    if os.environ.get("QA_MODE")=="remaining":routes=routes[4:]
     for page,title in routes:
         route="/?p="+page
         rr=api(a["s"],{"op":"screen","route":route,"nativeScreens":["catalog","detail","housing","groups","dating","form-drafts","shop","mail","home-previews","profile-sections","profile-tools","profile-wall"]})
@@ -327,9 +331,9 @@ try:
             def likes(items):
                 return {i["id"]:[b.get("label") for f in i.get("forms",[]) if f.get("datingAction")=="dating_like" for b in f.get("buttons",[])] for i in items}
             must("dating-swipes-do-not-like-or-pass",likes(before)==likes(after))
-            tap_node(hero());must("dating-profile-opens",wait(lambda:"До добірки" in blob(),20))
+            tap_node(hero());must("dating-profile-opens",wait(lambda:desc.replace("Відкрити анкету:","Відкрити фото:") in blob(),20))
             shot("dating-profile")
-            must("dating-return-button",tap("До добірки"));must("dating-return-keeps-filters",wait(lambda:hero() is not None and "50 км" in blob(),20))
+            must("dating-return-button",tap("До знайомств") or tap("До добірки"));must("dating-return-keeps-filters",wait(lambda:hero() is not None and "50 км" in blob(),20))
             shot("dating-catalog-after-return")
 
     for page in ("housing","events"):

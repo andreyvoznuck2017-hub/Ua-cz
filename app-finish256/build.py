@@ -108,6 +108,7 @@ activity.write_text(source)
 policy=W/"smali/eu/svoyi/nativeapp/DatingScreenPolicy.smali"
 source=policy.read_text()
 for signature,body in [
+    ("tab(Ljava/lang/String;)Ljava/lang/String;", "    .registers 1\n    invoke-static {p0}, Leu/svoyi/nativeapp/DatingRoute256;->tab(Ljava/lang/String;)Ljava/lang/String;\n    move-result-object p0\n    return-object p0"),
     ("profileRoute(ILjava/lang/String;Ljava/lang/String;)Z", "    .registers 3\n    invoke-static {p0, p1, p2}, Leu/svoyi/nativeapp/DatingRoute256;->profileRoute(ILjava/lang/String;Ljava/lang/String;)Z\n    move-result p0\n    return p0"),
     ("returnRoute(Ljava/lang/String;)Ljava/lang/String;", "    .registers 1\n    invoke-static {p0}, Leu/svoyi/nativeapp/DatingRoute256;->returnRoute(Ljava/lang/String;)Ljava/lang/String;\n    move-result-object p0\n    return-object p0")
 ]:

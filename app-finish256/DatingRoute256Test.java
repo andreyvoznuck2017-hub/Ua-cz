@@ -15,6 +15,11 @@ public final class DatingRoute256Test {
         require(DatingRoute256.returnRoute("/?p=dating&view=3&from=random").equals("/?p=dating&tab=random"),"random return");
         require(!DatingRoute256.profileRoute(4,live,origin),"profile identity bound");
         require(!DatingRoute256.profileRoute(0,live,origin),"positive identity");
+        require(DatingRoute256.profileRoute(3,"/?p=dating&view=3&from=sent",origin),"my likes profile");
+        require(DatingRoute256.returnRoute("/?p=dating&view=3&from=sent").equals("/?p=dating&tab=sent"),"my likes return");
+        require(DatingRoute256.tab("sent").equals("sent"),"my likes filter tab");
+        require(DatingRoute256.tab("random").equals("random"),"random filter tab");
+        require(DatingRoute256.tab("unknown").equals("discover"),"unknown tab fallback");
         String[] bad={
             "https://other.example/?p=dating&view=3", "//other.example/?p=dating&view=3",
             "http://test.jkunis.eu/?p=dating&view=3", "https://test.jkunis.eu:444/?p=dating&view=3",
@@ -27,6 +32,6 @@ public final class DatingRoute256Test {
             "/?p=dating&view=3&back=%3Fp%3Ddating%26tab%3Ddiscover%26tab%3Drandom"
         };
         for(String route:bad)require(!DatingRoute256.profileRoute(3,route,origin),"reject "+route);
-        System.out.println("Dating route contract: 23 checks passed");
+        System.out.println("Dating route contract: 28 checks passed");
     }
 }
