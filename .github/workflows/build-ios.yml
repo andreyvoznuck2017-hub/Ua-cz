@@ -1,0 +1,49 @@
+name: Build Svoyi iPhone
+on:
+  push:
+    branches: [ios/iphone-build-20261010]
+    paths: ['ios/**', '.github/workflows/build-ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: svoyi-ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  iphone:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Verify Apple build environment
+        run: |
+          mkdir -p ios/build
+          xcodebuild -version | tee ios/build/environment.txt
+          xcrun --sdk iphoneos --show-sdk-version | tee -a ios/build/environment.txt
+          sw_vers | tee -a ios/build/environment.txt
+      - name: Check signing configuration availability without reading secrets
+        env:
+          HAS_CERTIFICATE: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' }}
+          HAS_PROFILE: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 != '' }}
+          HAS_PASSWORD: ${{ secrets.P12_PASSWORD != '' }}
+        run: |
+          printf 'Certificate configured: %s\nProfile configured: %s\nCertificate password configured: %s\n' "$HAS_CERTIFICATE" "$HAS_PROFILE" "$HAS_PASSWORD" | tee ios/build/signing-availability.txt
+      - name: Build iPhone device package and simulator smoke test
+        if: ${{ hashFiles('ios/Scripts/build-device.sh') != '' }}
+        working-directory: ios
+        run: bash Scripts/build-device.sh
+      - name: Keep build evidence and device package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Svoyi-iPhone-build-${{ github.run_number }}
+          path: |
+            ios/build/*.ipa
+            ios/build/*.txt
+            ios/build/*.log
+            ios/build/*.json
+            ios/build/*.png
+          if-no-files-found: error
+          retention-days: 7
