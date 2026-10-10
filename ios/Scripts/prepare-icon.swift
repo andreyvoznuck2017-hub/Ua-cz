@@ -1,23 +1,33 @@
-import AppKit
-// Convert the existing repository logo to the opaque 1024px format required by the asset catalog.
-// No network access, new artwork, account data, or signing material is used.
-guard CommandLine.arguments.count == 3,
-      let image = NSImage(contentsOfFile: CommandLine.arguments[1]),
-      let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024,
-                                    bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false,
-                                    isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
-      let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
-    fatalError("Cannot read the existing app logo or create RGB image")
+import Foundation
+// Resize the existing logo using Apple's command-line image converter.
+// An opaque JPEG intermediary avoids unsupported 24-bit AppKit drawing contexts.
+guard CommandLine.arguments.count == 3 else {
+    print("Usage: prepare-icon.swift existing-logo output.png")
+    exit(2)
 }
-NSGraphicsContext.saveGraphicsState()
-NSGraphicsContext.current = context
-context.imageInterpolation = .high
-let bounds = NSRect(x: 0, y: 0, width: 1024, height: 1024)
-NSColor.white.setFill()
-bounds.fill()
-image.draw(in: bounds, from: .zero, operation: .sourceOver, fraction: 1)
-context.flushGraphics()
-NSGraphicsContext.restoreGraphicsState()
-guard let data = bitmap.representation(using: .png, properties: [:]) else { fatalError("PNG encoding failed") }
-try data.write(to: URL(fileURLWithPath: CommandLine.arguments[2]), options: .atomic)
-print("Existing app logo converted to opaque RGB 1024x1024")
+let input = URL(fileURLWithPath: CommandLine.arguments[1]).standardizedFileURL
+let output = URL(fileURLWithPath: CommandLine.arguments[2]).standardizedFileURL
+let intermediate = output.deletingLastPathComponent().appendingPathComponent("AppIcon-intermediate.jpg")
+func convert(_ arguments: [String]) throws {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/sips")
+    process.arguments = arguments
+    try process.run()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else {
+        throw NSError(domain: "Svoyi.IconConversion", code: Int(process.terminationStatus))
+    }
+}
+do {
+    guard FileManager.default.fileExists(atPath: input.path) else {
+        throw NSError(domain: "Svoyi.MissingIcon", code: 1)
+    }
+    try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: intermediate) }
+    try convert(["-z", "1024", "1024", "-s", "format", "jpeg", "-s", "formatOptions", "best", input.path, "--out", intermediate.path])
+    try convert(["-s", "format", "png", intermediate.path, "--out", output.path])
+    print("Existing logo converted; validate.py will verify RGB format and dimensions")
+} catch {
+    print("Icon conversion failed: \(error)")
+    exit(1)
+}
