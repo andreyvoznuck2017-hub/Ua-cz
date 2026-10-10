@@ -1,0 +1,8 @@
+build/
+*.xcuserstate
+xcuserdata/
+*.p12
+*.mobileprovision
+*.p8
+*.ipa
+Svoyi/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
